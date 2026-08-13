@@ -2,10 +2,7 @@
 
 namespace App\Models;
 
-<<<<<<< Updated upstream
-=======
 use Illuminate\Contracts\Auth\MustVerifyEmail;
->>>>>>> Stashed changes
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,11 +12,6 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-<<<<<<< Updated upstream
-
-    protected $fillable = [
-        'school_id',
-=======
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
     public const ROLE_KEPALA_SEKOLAH = 'kepala_sekolah';
@@ -27,76 +19,45 @@ class User extends Authenticatable
     public const ROLE_SISWA = 'siswa';
 
     protected $fillable = [
+        'school_id',
         'name',
->>>>>>> Stashed changes
         'username',
         'email',
         'password',
         'role',
-<<<<<<< Updated upstream
         'status',
+        'is_active',
         'must_change_password',
     ];
 
-    // password & token tidak boleh pernah ikut ter-serialize ke response (no secret leakage).
-=======
-        'is_active',
-    ];
-
->>>>>>> Stashed changes
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-<<<<<<< Updated upstream
     protected $casts = [
         'status' => 'string',
         'role' => 'string',
         'must_change_password' => 'boolean',
+        'is_active' => 'boolean',
+        'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'password' => 'hashed',
     ];
+
+    // ── Status Helpers ──
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->is_active || $this->status === 'active';
     }
 
-    public function isSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
-    }
-
-    public function isKepalaSekolah(): bool
-    {
-        return $this->role === 'kepala_sekolah';
-    }
-
-    public function isWaliKelas(): bool
-    {
-        return $this->role === 'wali_kelas';
-    }
-
-    public function isSiswa(): bool
-    {
-        return $this->role === 'siswa';
-    }
+    // ── Relations ──────────────────────────────────────────────
 
     public function school()
     {
         return $this->belongsTo(School::class);
-=======
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-        ];
->>>>>>> Stashed changes
     }
-
-    // ── Relations ──────────────────────────────────────────────
 
     public function teacherProfile(): HasOne
     {
