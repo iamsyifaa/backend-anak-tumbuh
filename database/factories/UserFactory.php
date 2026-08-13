@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class UserFactory extends Factory
 {
@@ -14,39 +13,53 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'username' => fake()->unique()->userName(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'school_id' => null,
+            'username' => $this->faker->unique()->userName(),
+            'email' => $this->faker->unique()->safeEmail(),
             'password' => Hash::make('password'),
-            'role' => User::ROLE_SISWA,
-            'is_active' => true,
-            'remember_token' => Str::random(10),
+            'role' => $this->faker->randomElement([
+                'super_admin',
+                'kepala_sekolah',
+                'wali_kelas',
+                'siswa',
+            ]),
+            'status' => 'active',
+            'must_change_password' => false,
         ];
     }
 
     public function superAdmin(): static
     {
-        return $this->state(fn () => ['role' => User::ROLE_SUPER_ADMIN]);
+        return $this->state(fn () => [
+            'role' => 'super_admin',
+        ]);
     }
 
     public function kepalaSekolah(): static
     {
-        return $this->state(fn () => ['role' => User::ROLE_KEPALA_SEKOLAH]);
+        return $this->state(fn () => [
+            'role' => 'kepala_sekolah',
+        ]);
     }
 
     public function waliKelas(): static
     {
-        return $this->state(fn () => ['role' => User::ROLE_WALI_KELAS]);
+        return $this->state(fn () => [
+            'role' => 'wali_kelas',
+        ]);
     }
 
     public function siswa(): static
     {
-        return $this->state(fn () => ['role' => User::ROLE_SISWA]);
+        return $this->state(fn () => [
+            'role' => 'siswa',
+        ]);
     }
 
     public function inactive(): static
     {
-        return $this->state(fn () => ['is_active' => false]);
+        return $this->state(fn () => [
+            'status' => 'inactive',
+        ]);
     }
 }
