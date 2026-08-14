@@ -22,16 +22,25 @@ class StudentProfileFactory extends Factory
         ];
     }
 
+    /**
+     * State untuk pendaftaran/metode manual.
+     */
     public function manual(): static
     {
         return $this->state(fn () => ['method' => StudentProfile::METHOD_MANUAL]);
     }
 
+    /**
+     * State untuk status kelulusan siswa.
+     */
     public function graduated(): static
     {
         return $this->state(fn () => ['status' => StudentProfile::STATUS_GRADUATED]);
     }
 
+    /**
+     * State untuk siswa pindahan/transferred.
+     */
     public function transferred(): static
     {
         return $this->state(fn () => ['status' => StudentProfile::STATUS_TRANSFERRED]);

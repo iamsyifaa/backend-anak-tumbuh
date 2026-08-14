@@ -29,4 +29,9 @@ class School extends Model
     {
         return $this->hasOne(AcademicYear::class)->where('status', 'active');
     }
+
+    public function habitConfigs()
+    {
+        return $this->hasMany(HabitConfig::class);
+    }
 }

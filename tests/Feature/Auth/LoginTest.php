@@ -146,6 +146,12 @@ class LoginTest extends TestCase
 
         $response->assertOk()->assertJsonPath('success', true);
 
+        // Laravel meng-cache guard yang sudah resolve dalam satu siklus test method
+        // (bukan bug produksi — di request HTTP asli tiap request memang proses baru).
+        // Guard di-reset manual di sini supaya request berikutnya benar-benar
+        // mengecek ulang token ke database, bukan pakai hasil cache request sebelumnya.
+        $this->app['auth']->forgetGuards();
+
         // Token yang sama dipakai lagi harus ditolak.
         $this->withHeader('Authorization', "Bearer {$token}")
             ->getJson('/api/me')
