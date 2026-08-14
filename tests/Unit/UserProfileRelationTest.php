@@ -14,7 +14,7 @@ class UserProfileRelationTest extends TestCase
 
     public function test_wali_kelas_has_teacher_profile(): void
     {
-        $user = User::factory()->waliKelas()->create();
+        $user = User::factory()->create(['role' => User::ROLE_WALI_KELAS]);
         $profile = TeacherProfile::factory()->create(['user_id' => $user->id]);
 
         $this->assertTrue($user->isWaliKelas());
@@ -24,7 +24,7 @@ class UserProfileRelationTest extends TestCase
 
     public function test_siswa_has_student_profile_with_method(): void
     {
-        $user = User::factory()->siswa()->create();
+        $user = User::factory()->create(['role' => User::ROLE_SISWA]);
         $profile = StudentProfile::factory()->create([
             'user_id' => $user->id,
             'method' => 'manual',
@@ -38,21 +38,21 @@ class UserProfileRelationTest extends TestCase
 
     public function test_super_admin_has_no_profile(): void
     {
-        $user = User::factory()->superAdmin()->create();
+        $user = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
 
         $this->assertNull($user->profile);
     }
 
     public function test_inactive_user_flag_is_boolean(): void
     {
-        $user = User::factory()->inactive()->create();
+        $user = User::factory()->create(['status' => User::STATUS_INACTIVE]);
 
-        $this->assertFalse($user->is_active);
+        $this->assertFalse($user->isActive());
     }
 
     public function test_no_duplicate_profile_allowed_per_user(): void
     {
-        $user = User::factory()->siswa()->create();
+        $user = User::factory()->create(['role' => User::ROLE_SISWA]);
         StudentProfile::factory()->create(['user_id' => $user->id]);
 
         $this->expectException(\Illuminate\Database\QueryException::class);
