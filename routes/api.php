@@ -39,3 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
     Route::post('/students/import/commit', [StudentImportController::class, 'commit']);
 });
+
+// Route domain lain (school, student, activity, dll) ditambahkan oleh task
+// masing-masing (ORG-001 dst.) — tidak didefinisikan di sini agar tidak
+// tabrakan/merge conflict antar anggota tim.
