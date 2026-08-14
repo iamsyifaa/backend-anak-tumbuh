@@ -34,4 +34,9 @@ class School extends Model
     {
         return $this->hasMany(HabitConfig::class);
     }
+
+    public function pointConfigs()
+    {
+        return $this->hasMany(PointConfig::class);
+    }
 }
