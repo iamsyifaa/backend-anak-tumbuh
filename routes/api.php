@@ -12,6 +12,7 @@ use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\TrophyController;
 use Illuminate\Support\Facades\Route;
 
 // ── AUTH-001 ────────────────────────────────────────────────────────────────
@@ -82,6 +83,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── MASTER-005 (Point Engine & History) ──────────────────────────────────
     Route::get('/students/{studentProfile}/points', [PointController::class, 'studentPoints']);
+
+    // ── MASTER-006 (Trophies & Milestones) ──────────────────────────────────
+    Route::get('/trophies', [TrophyController::class, 'index']);
+    Route::get('/students/{studentProfile}/trophies', [TrophyController::class, 'studentTrophies']);
 });
 
 // Route domain lain (school, student, activity, dll) ditambahkan oleh task
