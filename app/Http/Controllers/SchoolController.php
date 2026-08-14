@@ -83,4 +83,4 @@ class SchoolController extends Controller
 
         return $this->success(null, 'Sekolah berhasil dinonaktifkan.');
     }
-}   
+}
