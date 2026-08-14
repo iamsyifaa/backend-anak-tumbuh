@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AccountSecurityController;
 use App\Http\Controllers\Auth\AdminPasswordResetController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\HabitConfigController;
+use App\Http\Controllers\HabitController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentQrController;
@@ -54,6 +55,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/students/{studentProfile}/qr', [StudentQrController::class, 'revoke']);
     Route::post('/students/qr/generate-bulk', [StudentQrController::class, 'generateBulk']);
     Route::post('/students/qr/export-pdf', [StudentQrController::class, 'exportPdf']);
+
+    // ── MASTER-004 (Habit Master Configuration) ─────────────────────────────
+    Route::get('/habits', [HabitController::class, 'index']);
+    Route::post('/habits', [HabitController::class, 'store']);
+    Route::put('/habits/{habit}', [HabitController::class, 'update']);
+    Route::post('/habits/{habit}/indicators', [HabitController::class, 'storeIndicator']);
+    Route::post('/indicators/{indicator}/conditions', [HabitController::class, 'storeCondition']);
 });
 
 // Route domain lain (school, student, activity, dll) ditambahkan oleh task
