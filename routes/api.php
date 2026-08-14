@@ -8,6 +8,7 @@ use App\Http\Controllers\HabitConfigController;
 use App\Http\Controllers\PointConfigController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentImportController;
+use App\Http\Controllers\StudentQrController;
 use App\Http\Controllers\SubmissionController;
 use Illuminate\Support\Facades\Route;
 
@@ -63,4 +64,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── STUDENT IMPORT ───────────────────────────────────────────────────
     Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
     Route::post('/students/import/commit', [StudentImportController::class, 'commit']);
+
+    // ── STUDENT QR (MASTER-003) ──────────────────────────────────────────────
+    Route::post('/students/{studentProfile}/qr/generate', [StudentQrController::class, 'generate']);
+    Route::delete('/students/{studentProfile}/qr', [StudentQrController::class, 'revoke']);
+    Route::post('/students/qr/generate-bulk', [StudentQrController::class, 'generateBulk']);
+    Route::post('/students/qr/export-pdf', [StudentQrController::class, 'exportPdf']);
 });
