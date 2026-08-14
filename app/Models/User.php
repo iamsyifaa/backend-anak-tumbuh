@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -17,6 +17,9 @@ class User extends Authenticatable
     public const ROLE_KEPALA_SEKOLAH = 'kepala_sekolah';
     public const ROLE_WALI_KELAS = 'wali_kelas';
     public const ROLE_SISWA = 'siswa';
+
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
 
     protected $fillable = [
         'school_id',
@@ -45,16 +48,12 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    // ── Status Helpers ──
-
     public function isActive(): bool
     {
-        return $this->is_active || $this->status === 'active';
+        return $this->status === self::STATUS_ACTIVE;
     }
 
-    // ── Relations ──────────────────────────────────────────────
-
-    public function school()
+    public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
     }
@@ -69,10 +68,6 @@ class User extends Authenticatable
         return $this->hasOne(StudentProfile::class);
     }
 
-    /**
-     * Profile aktif sesuai role user. Mengembalikan null untuk
-     * super_admin karena role tersebut tidak punya tabel profile.
-     */
     public function getProfileAttribute(): ?object
     {
         return match ($this->role) {
@@ -81,8 +76,6 @@ class User extends Authenticatable
             default => null,
         };
     }
-
-    // ── Role helpers (murni pengecekan, bukan authorization logic) ──
 
     public function isSuperAdmin(): bool
     {

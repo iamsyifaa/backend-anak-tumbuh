@@ -13,10 +13,12 @@ class StudentProfileFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory()->siswa(),
+            'user_id' => User::factory()->state(['role' => User::ROLE_SISWA]),
             'full_name' => fake()->name(),
-            'method' => 'digital',
+            'method' => StudentProfile::METHOD_DIGITAL,
+            'status' => StudentProfile::STATUS_ACTIVE,
             'birth_date' => fake()->dateTimeBetween('-13 years', '-6 years'),
+            'nisn' => fake()->unique()->numerify('##########'),
         ];
     }
 
@@ -25,9 +27,7 @@ class StudentProfileFactory extends Factory
      */
     public function manual(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'method' => 'manual',
-        ]);
+        return $this->state(fn () => ['method' => StudentProfile::METHOD_MANUAL]);
     }
 
     /**
@@ -35,8 +35,14 @@ class StudentProfileFactory extends Factory
      */
     public function graduated(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'status' => 'graduated', // Pastikan kolom 'status' ini ada di migration student_profiles
-        ]);
+        return $this->state(fn () => ['status' => StudentProfile::STATUS_GRADUATED]);
+    }
+
+    /**
+     * State untuk siswa pindahan/transferred.
+     */
+    public function transferred(): static
+    {
+        return $this->state(fn () => ['status' => StudentProfile::STATUS_TRANSFERRED]);
     }
 }
