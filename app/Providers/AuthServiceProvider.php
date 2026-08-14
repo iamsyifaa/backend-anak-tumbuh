@@ -3,16 +3,20 @@
 namespace App\Providers;
 
 use App\Models\AcademicYear;
+use App\Models\ActivitySubmission;
 use App\Models\Habit;
 use App\Models\HabitConfig;
 use App\Models\HabitIndicator;
 use App\Models\IndicatorOption;
+use App\Models\PointConfig;
 use App\Models\School;
 use App\Models\User;
 use App\Policies\AcademicYearPolicy;
 use App\Policies\HabitConfigPolicy;
 use App\Policies\HabitPolicy;
+use App\Policies\PointConfigPolicy;
 use App\Policies\SchoolPolicy;
+use App\Policies\SubmissionPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -34,6 +38,12 @@ class AuthServiceProvider extends ServiceProvider
         HabitIndicator::class => HabitPolicy::class,
         IndicatorOption::class => HabitPolicy::class,
         HabitConfig::class => HabitConfigPolicy::class,
+
+        // --- SEC-005: Policy Otorisasi Poin ---
+        PointConfig::class => PointConfigPolicy::class,
+
+        // --- SEC-006: Policy Otorisasi Submisi & Lock ---
+        ActivitySubmission::class => SubmissionPolicy::class,
     ];
 
     public function boot(): void
