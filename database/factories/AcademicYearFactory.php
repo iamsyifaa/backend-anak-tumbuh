@@ -12,7 +12,11 @@ class AcademicYearFactory extends Factory
 
     public function definition(): array
     {
-        $start = $this->faker->dateTimeBetween('-1 year', 'now');
+        // unique() memastikan start_date antar panggilan factory tidak pernah sama persis,
+        // supaya 'name' (diturunkan dari tahun start_date) juga tidak bentrok antar academic
+        // year dalam sekolah yang sama — mencegah UniqueConstraintViolationException flaky
+        // saat test membuat >1 AcademicYear untuk school_id yang sama.
+        $start = $this->faker->unique()->dateTimeBetween('-5 years', 'now');
 
         return [
             'school_id' => School::factory(),

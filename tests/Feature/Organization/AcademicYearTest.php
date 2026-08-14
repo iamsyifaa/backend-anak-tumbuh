@@ -43,8 +43,8 @@ class AcademicYearTest extends TestCase
         $school = School::factory()->create();
         $admin = User::factory()->create(['role' => 'super_admin']);
 
-        $old = AcademicYear::factory()->create(['school_id' => $school->id, 'status' => 'active']);
-        $new = AcademicYear::factory()->create(['school_id' => $school->id, 'status' => 'inactive']);
+        $old = AcademicYear::factory()->create(['school_id' => $school->id, 'name' => '2024/2025', 'status' => 'active']);
+        $new = AcademicYear::factory()->create(['school_id' => $school->id, 'name' => '2025/2026', 'status' => 'inactive']);
 
         $response = $this->actingAs($admin, 'sanctum')
             ->postJson("/api/schools/{$school->id}/academic-years/{$new->id}/activate");

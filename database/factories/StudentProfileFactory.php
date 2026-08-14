@@ -19,4 +19,24 @@ class StudentProfileFactory extends Factory
             'birth_date' => fake()->dateTimeBetween('-13 years', '-6 years'),
         ];
     }
+
+    /**
+     * State untuk pendaftaran/metode manual.
+     */
+    public function manual(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'method' => 'manual',
+        ]);
+    }
+
+    /**
+     * State untuk status kelulusan siswa.
+     */
+    public function graduated(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'graduated', // Pastikan kolom 'status' ini ada di migration student_profiles
+        ]);
+    }
 }

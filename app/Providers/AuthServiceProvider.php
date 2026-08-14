@@ -3,9 +3,15 @@
 namespace App\Providers;
 
 use App\Models\AcademicYear;
+use App\Models\Habit;
+use App\Models\HabitConfig;
+use App\Models\HabitIndicator;
+use App\Models\IndicatorOption;
 use App\Models\School;
 use App\Models\User;
 use App\Policies\AcademicYearPolicy;
+use App\Policies\HabitConfigPolicy;
+use App\Policies\HabitPolicy;
 use App\Policies\SchoolPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -13,10 +19,21 @@ use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
+    /**
+     * The model to policy mappings for the application.
+     *
+     * @var array<class-string, class-string>
+     */
     protected $policies = [
         School::class => SchoolPolicy::class,
         AcademicYear::class => AcademicYearPolicy::class,
         User::class => UserPolicy::class,
+        
+        // --- AUTH-004: Policy Otorisasi Pembiasaan ---
+        Habit::class => HabitPolicy::class,
+        HabitIndicator::class => HabitPolicy::class,
+        IndicatorOption::class => HabitPolicy::class,
+        HabitConfig::class => HabitConfigPolicy::class,
     ];
 
     public function boot(): void
