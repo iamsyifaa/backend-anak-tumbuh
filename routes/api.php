@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\HabitConfigController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\PointConfigController;
+use App\Http\Controllers\PointController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentQrController;
@@ -78,6 +79,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/habits/{habit}', [HabitController::class, 'update']);
     Route::post('/habits/{habit}/indicators', [HabitController::class, 'storeIndicator']);
     Route::post('/indicators/{indicator}/conditions', [HabitController::class, 'storeCondition']);
+
+    // ── MASTER-005 (Point Engine & History) ──────────────────────────────────
+    Route::get('/students/{studentProfile}/points', [PointController::class, 'studentPoints']);
 });
 
 // Route domain lain (school, student, activity, dll) ditambahkan oleh task
