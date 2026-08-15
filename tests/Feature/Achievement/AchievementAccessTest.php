@@ -13,10 +13,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
-/**
- * ⚠️ Sama seperti SubmissionSecurityTest (SEC-006): asumsi StudentProfile::factory()
- * & $user->studentProfile relation sudah ada dari kerjaan Anggota B.
- */
 class AchievementAccessTest extends TestCase
 {
     use RefreshDatabase;
@@ -48,32 +44,35 @@ class AchievementAccessTest extends TestCase
         }
     }
 
-    // ── Award (per-sekolah) ──────────────────────────────────────────────
+    // ── Award (global master) ───────────────────────────────────────────
 
-    public function test_kepala_sekolah_can_manage_award_for_own_school(): void
+    public function test_only_super_admin_can_manage_master_award(): void
     {
-        $school = School::factory()->create();
-        $kepsek = User::factory()->create(['role' => 'kepala_sekolah', 'school_id' => $school->id]);
-        $award = Award::factory()->create(['school_id' => $school->id]);
+        $admin = User::factory()->create(['role' => 'super_admin']);
+        $kepsek = User::factory()->create(['role' => 'kepala_sekolah']);
+        $award = Award::factory()->create();
 
-        $this->assertTrue(Gate::forUser($kepsek)->allows('update', $award));
-    }
-
-    public function test_kepala_sekolah_cannot_manage_award_of_other_school(): void
-    {
-        $ownSchool = School::factory()->create();
-        $otherSchool = School::factory()->create();
-        $kepsek = User::factory()->create(['role' => 'kepala_sekolah', 'school_id' => $ownSchool->id]);
-        $award = Award::factory()->create(['school_id' => $otherSchool->id]);
-
+        $this->assertTrue(Gate::forUser($admin)->allows('update', $award));
         $this->assertFalse(Gate::forUser($kepsek)->allows('update', $award));
     }
 
-    public function test_wali_kelas_cannot_manage_award(): void
+    public function test_kepala_sekolah_and_wali_kelas_can_give_award(): void
+    {
+        $school = School::factory()->create();
+        $kepsek = User::factory()->create(['role' => 'kepala_sekolah', 'school_id' => $school->id]);
+        $wali = User::factory()->create(['role' => 'wali_kelas', 'school_id' => $school->id]);
+        $siswa = User::factory()->create(['role' => 'siswa', 'school_id' => $school->id]);
+
+        $this->assertTrue(Gate::forUser($kepsek)->allows('give', Award::class));
+        $this->assertTrue(Gate::forUser($wali)->allows('give', Award::class));
+        $this->assertFalse(Gate::forUser($siswa)->allows('give', Award::class));
+    }
+
+    public function test_wali_kelas_cannot_manage_master_award(): void
     {
         $school = School::factory()->create();
         $wali = User::factory()->create(['role' => 'wali_kelas', 'school_id' => $school->id]);
-        $award = Award::factory()->create(['school_id' => $school->id]);
+        $award = Award::factory()->create();
 
         $this->assertFalse(Gate::forUser($wali)->allows('update', $award));
     }
