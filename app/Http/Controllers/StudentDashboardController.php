@@ -1,0 +1,183 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ActivitySubmission;
+use App\Models\Certificate;
+use App\Models\PointTransaction;
+use App\Models\SchoolFeatureSetting;
+use App\Models\StudentAward;
+use App\Models\StudentBadge;
+use App\Models\StudentProfile;
+use App\Support\ApiResponse;
+use Illuminate\Http\Request;
+
+/**
+ * MASTER-008 — mengikuti pola persis StudentSelfController::me() (SEC-008,
+ * Anggota A): identitas SELALU dari $request->user()->studentProfile,
+ * TIDAK PERNAH dari route param/query/body. Ini bikin seluruh controller
+ * ini IDOR-immune by design — siswa tidak mungkin bisa lihat data siswa
+ * lain lewat endpoint-endpoint ini, apapun yang mereka kirim di request.
+ *
+ * Response contract dijaga stabil (field & tipe konsisten) karena dipakai
+ * FE-009 (Anggota D, Student Dashboard) — perubahan struktur di sini
+ * berdampak langsung ke frontend, jadi kalau perlu ubah shape, koordinasi
+ * dulu, jangan diam-diam.
+ */
+class StudentDashboardController extends Controller
+{
+    use ApiResponse;
+
+    private function currentStudentProfile(Request $request): StudentProfile
+    {
+        $profile = $request->user()->studentProfile;
+
+        abort_if($profile === null, 404, 'Profil siswa tidak ditemukan untuk akun ini.');
+
+        return $profile;
+    }
+
+    /**
+     * GET /api/student/me/history
+     * Riwayat pengisian harian, terbaru dulu, paginated.
+     */
+    public function history(Request $request)
+    {
+        $profile = $this->currentStudentProfile($request);
+
+        $history = ActivitySubmission::where('student_profile_id', $profile->id)
+            ->with('answers.indicator', 'answers.option')
+            ->orderByDesc('activity_date')
+            ->paginate(15);
+
+        return $this->success($history);
+    }
+
+    /**
+     * GET /api/student/me/achievements
+     * Gabungan badge + award yang sudah didapat siswa, dengan total
+     * masing-masing supaya frontend tidak perlu hitung sendiri.
+     */
+    public function achievements(Request $request)
+    {
+        $profile = $this->currentStudentProfile($request);
+
+        $badges = StudentBadge::with('badge')
+            ->where('student_profile_id', $profile->id)
+            ->orderByDesc('awarded_at')
+            ->get();
+
+        $awards = StudentAward::with(['award', 'givenBy'])
+            ->where('student_profile_id', $profile->id)
+            ->orderByDesc('given_at')
+            ->get();
+
+        return $this->success([
+            'total_badges' => $badges->count(),
+            'total_awards' => $awards->count(),
+            'badges' => $badges,
+            'awards' => $awards,
+        ]);
+    }
+
+    /**
+     * GET /api/student/me/certificates
+     */
+    public function certificates(Request $request)
+    {
+        $profile = $this->currentStudentProfile($request);
+
+        $certificates = Certificate::with('award')
+            ->where('student_profile_id', $profile->id)
+            ->orderByDesc('issued_at')
+            ->paginate(15);
+
+        return $this->success($certificates);
+    }
+
+    /**
+     * GET /api/student/me/ranking
+     *
+     * Hormati SchoolFeatureSetting — kalau ranking dimatikan sekolah,
+     * TIDAK menampilkan data sama sekali (bukan cuma disembunyikan di
+     * frontend), sesuai requirement "ranking hanya jika feature aktif".
+     *
+     * ⚠️ Field `class_streak_rank`/dsb TIDAK disediakan — itu depend ke
+     * BE-008 (Gamification Engine, Anggota C) yang per 16 Agustus 2026
+     * belum dikerjakan. Ranking di bawah murni berbasis akumulasi Poin
+     * (yang sudah pasti ada datanya), bukan streak. Kalau nanti BE-008
+     * selesai dan streak based ranking dibutuhkan, endpoint ini perlu
+     * di-extend, BUKAN dibuat endpoint terpisah (supaya frontend tidak
+     * perlu ubah 2 tempat).
+     */
+    public function ranking(Request $request)
+    {
+        $profile = $this->currentStudentProfile($request);
+        $enrollment = $profile->currentEnrollment()->first();
+
+        abort_if($enrollment === null, 404, 'Siswa belum terdaftar di rombel manapun pada periode aktif.');
+
+        $schoolId = $profile->user->school_id;
+        $setting = SchoolFeatureSetting::where('school_id', $schoolId)->first();
+
+        $classEnabled = (bool) ($setting->ranking_class_enabled ?? false);
+        $cohortEnabled = (bool) ($setting->ranking_cohort_enabled ?? false);
+
+        if (! $classEnabled && ! $cohortEnabled) {
+            return $this->success([
+                'ranking_enabled' => false,
+                'message' => 'Fitur ranking belum diaktifkan oleh sekolah.',
+            ]);
+        }
+
+        $result = [
+            'ranking_enabled' => true,
+            'class_rank' => null,
+            'cohort_rank' => null,
+        ];
+
+        if ($classEnabled) {
+            $result['class_rank'] = $this->computeRank(
+                $profile,
+                StudentProfile::whereHas('enrollments', function ($q) use ($enrollment) {
+                    $q->where('rombel_id', $enrollment->rombel_id)
+                        ->where('status', 'active');
+                })
+            );
+        }
+
+        if ($cohortEnabled) {
+            $result['cohort_rank'] = $this->computeRank(
+                $profile,
+                StudentProfile::whereHas('enrollments', function ($q) use ($enrollment) {
+                    $q->where('academic_year_id', $enrollment->academic_year_id)
+                        ->where('status', 'active');
+                })
+            );
+        }
+
+        return $this->success($result);
+    }
+
+    private function computeRank(StudentProfile $profile, $peerQuery): array
+    {
+        $peerIds = $peerQuery->pluck('id');
+
+        $totals = PointTransaction::whereIn(
+            'user_id',
+            StudentProfile::whereIn('id', $peerIds)->pluck('user_id')
+        )
+            ->selectRaw('user_id, SUM(amount) as total')
+            ->groupBy('user_id')
+            ->orderByDesc('total')
+            ->pluck('total', 'user_id');
+
+        $rank = $totals->keys()->search($profile->user_id);
+
+        return [
+            'rank' => $rank === false ? null : $rank + 1,
+            'total_students' => $totals->count(),
+            'my_points' => (int) ($totals[$profile->user_id] ?? 0),
+        ];
+    }
+}

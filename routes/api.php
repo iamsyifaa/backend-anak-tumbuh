@@ -18,6 +18,7 @@ use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SchoolFeatureSettingController;
 use App\Http\Controllers\StudentAchievementController;
+use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Controllers\StudentSelfController;
@@ -94,6 +95,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('student/me', [StudentSelfController::class, 'me']);
     Route::get('certificates/{certificate}', [StudentSelfController::class, 'showCertificate']);
     Route::get('students/{studentProfile}', [StudentSelfController::class, 'showProfile']);
+
+    // ── MASTER-008 (Student API — dashboard read endpoints) ───────────────
+    Route::get('student/me/history', [StudentDashboardController::class, 'history']);
+    Route::get('student/me/achievements', [StudentDashboardController::class, 'achievements']);
+    Route::get('student/me/certificates', [StudentDashboardController::class, 'certificates']);
+    Route::get('student/me/ranking', [StudentDashboardController::class, 'ranking']);
 
     // ── SEC-009 ──────────────────────────────────────────────────────────
     Route::get('rombels/{rombel}', [RombelController::class, 'show']);
