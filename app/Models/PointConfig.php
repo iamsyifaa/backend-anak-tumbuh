@@ -9,7 +9,7 @@ class PointConfig extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['school_id', 'version', 'effective_date', 'status', 'published_at', 'published_by'];
+    protected $fillable = ['school_id', 'version', 'effective_date', 'initiative_bonus_points', 'status', 'published_at', 'published_by'];
 
     protected $casts = [
         'effective_date' => 'date',
