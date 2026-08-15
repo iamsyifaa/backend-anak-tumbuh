@@ -5,22 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\PointTransaction;
 use App\Models\StudentProfile;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
+/**
+ * FIX (review MASTER-005):
+ * 1. Otorisasi ditambahkan — sebelumnya siapa saja yang login bisa lihat
+ *    poin siswa manapun.
+ * 2. Query disesuaikan ke struktur ASLI point_transactions yang pakai
+ *    kolom `user_id` (App\Models\User), BUKAN `student_profile_id`.
+ */
 class PointController extends Controller
 {
-    /**
-     * GET /api/students/{studentProfile}/points
-     * Ringkasan & Riwayat Poin Siswa (MASTER-005)
-     */
+    // GET /api/students/{studentProfile}/points
     public function studentPoints(StudentProfile $studentProfile): JsonResponse
     {
-        $transactions = PointTransaction::where('student_profile_id', $studentProfile->id)
-            ->latest()
+        $user = request()->user();
+
+        if ($user->isSiswa() && $user->studentProfile?->id !== $studentProfile->id) {
+            abort(403, 'Kamu hanya bisa melihat poin milikmu sendiri.');
+        }
+
+        $targetUserId = $studentProfile->user_id;
+
+        $transactions = PointTransaction::where('user_id', $targetUserId)
+            ->latest('created_at')
             ->paginate(15);
 
-        $totalPoints = PointTransaction::where('student_profile_id', $studentProfile->id)
-            ->sum('amount');
+        $totalPoints = PointTransaction::where('user_id', $targetUserId)->sum('amount');
 
         return response()->json([
             'status' => 'success',
