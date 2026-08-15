@@ -39,4 +39,14 @@ class School extends Model
     {
         return $this->hasMany(PointConfig::class);
     }
+
+    public function awards()
+    {
+        return $this->hasMany(Award::class);
+    }
+
+    public function featureSetting()
+    {
+        return $this->hasOne(SchoolFeatureSetting::class);
+    }
 }

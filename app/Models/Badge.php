@@ -14,13 +14,20 @@ class Badge extends Model
     public const TARGET_TOTAL_EXP = 'total_exp';
 
     protected $fillable = [
-        'code', 'name', 'description', 'icon_path',
-        'target_type', 'target_value', 'active',
+        'code',
+        'name',
+        'description',
+        'icon_path',
+        'target_type',
+        'target_value',
+        'criteria',
+        'active',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'target_value' => 'integer',
+        'criteria' => 'array',
     ];
 
     public function studentBadges(): HasMany

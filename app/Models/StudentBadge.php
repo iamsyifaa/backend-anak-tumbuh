@@ -2,17 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StudentBadge extends Model
 {
-    public const CREATED_AT = null;
-    public const UPDATED_AT = null;
+    use HasFactory;
 
-    protected $fillable = ['student_profile_id', 'badge_id', 'awarded_at'];
+    public $timestamps = false;
 
-    protected $casts = ['awarded_at' => 'datetime'];
+    protected $fillable = [
+        'student_profile_id',
+        'badge_id',
+        'awarded_at',
+    ];
+
+    protected $casts = [
+        'awarded_at' => 'datetime',
+    ];
 
     public function studentProfile(): BelongsTo
     {

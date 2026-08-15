@@ -2,17 +2,30 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StudentAward extends Model
 {
-    public const CREATED_AT = null;
-    public const UPDATED_AT = null;
+    use HasFactory;
 
-    protected $fillable = ['student_profile_id', 'award_id', 'given_by', 'note', 'given_at'];
+    public $timestamps = false;
 
-    protected $casts = ['given_at' => 'datetime'];
+    protected $fillable = [
+        'student_profile_id',
+        'award_id',
+        'given_by',
+        'note',
+        'given_at',
+        'awarded_at',
+        'certificate_id',
+    ];
+
+    protected $casts = [
+        'given_at' => 'datetime',
+        'awarded_at' => 'datetime',
+    ];
 
     public function studentProfile(): BelongsTo
     {

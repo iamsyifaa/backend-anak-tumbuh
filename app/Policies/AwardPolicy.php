@@ -2,35 +2,52 @@
 
 namespace App\Policies;
 
+use App\Models\Award;
+use App\Models\School;
 use App\Models\User;
 
+/**
+ * Policy otorisasi Award:
+ * - Manajemen Award per sekolah: Super Admin lintas sekolah, Kepala Sekolah hanya untuk sekolahnya sendiri.
+ * - Pemberian Award (give): Super Admin, Kepala Sekolah, dan Wali Kelas.
+ */
 class AwardPolicy
 {
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, School $school): bool
     {
-        return true;
+        return $this->inScope($user, $school);
     }
 
-    // Master award (definisi) — Super Admin only, sama seperti Badge.
-    public function create(User $user): bool
+    public function view(User $user, Award $award): bool
     {
-        return $user->isSuperAdmin();
+        return $this->inScope($user, $award->school);
     }
 
-    public function update(User $user): bool
+    public function create(User $user, School $school): bool
     {
-        return $user->isSuperAdmin();
+        return $user->can('award.manage') && $this->inScope($user, $school);
     }
 
-    public function delete(User $user): bool
+    public function update(User $user, Award $award): bool
     {
-        return $user->isSuperAdmin();
+        return $user->can('award.manage') && $this->inScope($user, $award->school);
     }
 
-    // Memberi award KE siswa — boleh Wali Kelas/Kepala Sekolah/Super
-    // Admin (guru yang menilai siswanya), TIDAK boleh siswa sendiri.
+    public function delete(User $user, Award $award): bool
+    {
+        return $user->can('award.manage') && $this->inScope($user, $award->school);
+    }
+
+    /**
+     * Memberi award KE siswa — boleh Wali Kelas, Kepala Sekolah, atau Super Admin.
+     */
     public function give(User $user): bool
     {
         return $user->isSuperAdmin() || $user->isKepalaSekolah() || $user->isWaliKelas();
+    }
+
+    private function inScope(User $user, School $school): bool
+    {
+        return $user->isSuperAdmin() || $user->school_id === $school->id;
     }
 }
