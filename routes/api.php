@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\StudentQrLoginController;
 use App\Http\Controllers\AwardController;
 use App\Http\Controllers\BadgeController;
+use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\HabitConfigController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\PointConfigController;
@@ -153,6 +154,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/awards/{award}', [AwardController::class, 'destroy']);
     Route::post('/students/{studentProfile}/awards', [AwardController::class, 'give']);
     Route::get('/students/{studentProfile}/awards', [AwardController::class, 'studentAwards']);
+
+    // ── MASTER-007 (Certificate Template) ────────────────────────────────
+    Route::get('/certificate-templates', [CertificateTemplateController::class, 'index']);
+    Route::post('/certificate-templates', [CertificateTemplateController::class, 'store']);
+    Route::put('/certificate-templates/{certificateTemplate}', [CertificateTemplateController::class, 'update']);
+    Route::delete('/certificate-templates/{certificateTemplate}', [CertificateTemplateController::class, 'destroy']);
 });
 
 // Route download TERPISAH dari grup auth:sanctum di atas — signed URL

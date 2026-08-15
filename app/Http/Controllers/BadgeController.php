@@ -8,9 +8,14 @@ use App\Models\StudentProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * FIX (MASTER-007): tambah field `criteria` (JSON) yang sudah ada di
+ * kolom database (lihat migration ALTER 2026_08_16_000001) tapi belum
+ * bisa diisi lewat controller ini.
+ */
 class BadgeController extends Controller
 {
-    // GET /api/badges — daftar master badge
+    // GET /api/badges
     public function index(): JsonResponse
     {
         $this->authorize('viewAny', Badge::class);
@@ -29,6 +34,7 @@ class BadgeController extends Controller
             'description' => 'nullable|string',
             'target_type' => 'required|string|in:total_points,total_exp',
             'target_value' => 'required|integer|min:1',
+            'criteria' => 'nullable|array',
             'active' => 'nullable|boolean',
         ]);
 
@@ -48,6 +54,7 @@ class BadgeController extends Controller
             'description' => 'nullable|string',
             'target_type' => 'sometimes|required|string|in:total_points,total_exp',
             'target_value' => 'sometimes|required|integer|min:1',
+            'criteria' => 'nullable|array',
             'active' => 'nullable|boolean',
         ]);
 

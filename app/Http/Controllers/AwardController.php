@@ -8,6 +8,15 @@ use App\Models\StudentProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * FIX (MASTER-007): disesuaikan dengan skema Award terbaru (Anggota A,
+ * SEC-007) — sekarang punya `school_id` (nullable = global/Super Admin,
+ * diisi = milik sekolah tertentu) dan `criteria` (JSON, syarat berbasis
+ * kebiasaan/periode — BUKAN Poin/Level, sesuai requirement eksplisit
+ * MASTER-007).
+ *
+ * Ditambahkan juga update()/destroy() yang kemarin belum ada.
+ */
 class AwardController extends Controller
 {
     // GET /api/awards
@@ -24,9 +33,15 @@ class AwardController extends Controller
         $this->authorize('create', Award::class);
 
         $validated = $request->validate([
+            'school_id' => 'nullable|integer|exists:schools,id',
             'code' => 'required|string|unique:awards,code',
             'name' => 'required|string',
             'description' => 'nullable|string',
+            // criteria berbasis kebiasaan/periode, BUKAN poin/level —
+            // divalidasi generic (array bebas), enforcement "bukan
+            // poin/level" ada di lapisan dokumentasi/review, karena
+            // sifatnya definisi terbuka (configurable) sesuai requirement.
+            'criteria' => 'nullable|array',
             'generates_certificate' => 'nullable|boolean',
             'active' => 'nullable|boolean',
         ]);
@@ -36,8 +51,37 @@ class AwardController extends Controller
         return response()->json(['status' => 'success', 'data' => $award], 201);
     }
 
+    // PUT /api/awards/{award}
+    public function update(Request $request, Award $award): JsonResponse
+    {
+        $this->authorize('update', $award);
+
+        $validated = $request->validate([
+            'school_id' => 'nullable|integer|exists:schools,id',
+            'code' => 'sometimes|required|string|unique:awards,code,'.$award->id,
+            'name' => 'sometimes|required|string',
+            'description' => 'nullable|string',
+            'criteria' => 'nullable|array',
+            'generates_certificate' => 'nullable|boolean',
+            'active' => 'nullable|boolean',
+        ]);
+
+        $award->update($validated);
+
+        return response()->json(['status' => 'success', 'data' => $award]);
+    }
+
+    // DELETE /api/awards/{award}
+    public function destroy(Award $award): JsonResponse
+    {
+        $this->authorize('delete', $award);
+
+        $award->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Award berhasil dihapus']);
+    }
+
     // POST /api/students/{studentProfile}/awards
-    // Pemberian MANUAL award ke siswa oleh guru/kepsek/admin.
     public function give(Request $request, StudentProfile $studentProfile): JsonResponse
     {
         $this->authorize('give', Award::class);

@@ -7,6 +7,7 @@ use App\Models\ActivitySubmission;
 use App\Models\Award;
 use App\Models\Badge;
 use App\Models\Certificate;
+use App\Models\CertificateTemplate;
 use App\Models\Habit;
 use App\Models\HabitConfig;
 use App\Models\HabitIndicator;
@@ -24,6 +25,7 @@ use App\Policies\AcademicYearPolicy;
 use App\Policies\AwardPolicy;
 use App\Policies\BadgePolicy;
 use App\Policies\CertificatePolicy;
+use App\Policies\CertificateTemplatePolicy;
 use App\Policies\HabitConfigPolicy;
 use App\Policies\HabitPolicy;
 use App\Policies\PointConfigPolicy;
@@ -69,6 +71,9 @@ class AuthServiceProvider extends ServiceProvider
         StudentBadge::class => StudentAchievementPolicy::class,
         StudentAward::class => StudentAchievementPolicy::class,
         SchoolFeatureSetting::class => SchoolFeatureSettingPolicy::class,
+
+        // --- MASTER-007: Policy Otorisasi Certificate Template ---
+        CertificateTemplate::class => CertificateTemplatePolicy::class,
 
         // --- SEC-008 & SEC Modul Lain ---
         Certificate::class => CertificatePolicy::class,
