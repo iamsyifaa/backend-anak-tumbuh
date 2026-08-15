@@ -90,6 +90,15 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         // 3. Register permissions dari config/permissions.php
+        // Gate flat-permission (mis. Gate::allows('report.export')) diturunkan otomatis
+        // dari config/permissions.php — satu sumber kebenaran, tidak dobel-maintain.
+        // Scope (sekolah/rombel/diri-sendiri) TETAP dicek terpisah lewat Policy per-model,
+        // Gate ini cuma menjawab "role ini punya permission ini atau tidak".
+        //
+        // Diratakan dulu jadi permission => [role, role, ...] SEBELUM Gate::define,
+        // supaya satu permission yang dimiliki beberapa role (mis. school.manage oleh
+        // super_admin & kepala_sekolah) tidak saling menimpa gara-gara Gate::define
+        // dipanggil ulang per role.
         $permissionRoles = [];
         foreach (config('permissions', []) as $role => $permissions) {
             foreach ($permissions as $permission) {
@@ -102,7 +111,10 @@ class AuthServiceProvider extends ServiceProvider
         }
 
         // ── SEC-010 ──────────────────────────────────────────────────────
-        // Named ability untuk Policy yang tidak attached ke satu model
+        // Named ability untuk Policy yang tidak attached ke satu model (School
+        // sudah dipakai SchoolPolicy) — dashboard punya aturan scope BEDA
+        // dari manage sekolah biasa (khusus read-only), jadi butuh Policy &
+        // ability terpisah, bukan menambah method baru di SchoolPolicy.
         Gate::define('principal.dashboard.view', [PrincipalPolicy::class, 'viewDashboard']);
     }
 }
