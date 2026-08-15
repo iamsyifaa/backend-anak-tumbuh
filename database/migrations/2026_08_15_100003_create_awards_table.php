@@ -21,17 +21,25 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
+    /**
+     * Matikan DDL transaction agar tidak memicu 'transaction is aborted'
+     * jika ada pengecekan tabel di PostgreSQL Supabase.
+     */
+    public $withinTransaction = false;
+
     public function up(): void
     {
-        Schema::create('awards', function (Blueprint $table) {
-            $table->id();
-            $table->string('code')->unique();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->boolean('generates_certificate')->default(false);
-            $table->boolean('active')->default(true);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('awards')) {
+            Schema::create('awards', function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->boolean('generates_certificate')->default(false);
+                $table->boolean('active')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

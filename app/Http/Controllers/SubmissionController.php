@@ -31,7 +31,13 @@ class SubmissionController extends Controller
     {
         $this->authorize('create', ActivitySubmission::class);
 
-        $studentProfileId = $request->user()->studentProfile->id;
+        $studentProfile = $request->user()->studentProfile;
+
+        if (! $studentProfile) {
+            return $this->error('Hanya siswa yang dapat membuat submisi.', 403);
+        }
+
+        $studentProfileId = $studentProfile->id;
         $activityDate = $request->string('activity_date')->toString();
 
         if ($this->guard->isBackfillAttempt($activityDate)) {

@@ -20,22 +20,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('badges', function (Blueprint $table) {
-            $table->id();
-            $table->string('code')->unique();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('icon_path')->nullable();
+        if (!Schema::hasTable('badges')) {
+            Schema::create('badges', function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->string('icon_path')->nullable();
 
-            // Jenis target yang didukung saat ini: 'total_points', 'total_exp'.
-            // Nilai lain bisa ditambah di masa depan tanpa migration baru,
-            // cukup tambah case baru di BadgeEvaluationService.
-            $table->string('target_type');
-            $table->unsignedInteger('target_value');
+                // Jenis target yang didukung saat ini: 'total_points', 'total_exp'.
+                // Nilai lain bisa ditambah di masa depan tanpa migration baru,
+                // cukup tambah case baru di BadgeEvaluationService.
+                $table->string('target_type');
+                $table->unsignedInteger('target_value');
 
-            $table->boolean('active')->default(true);
-            $table->timestamps();
-        });
+                $table->boolean('active')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

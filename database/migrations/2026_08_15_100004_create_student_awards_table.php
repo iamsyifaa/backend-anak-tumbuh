@@ -13,16 +13,24 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
+    /**
+     * Matikan DDL transaction agar tidak memicu 'transaction is aborted'
+     * jika ada pengecekan tabel di PostgreSQL Supabase.
+     */
+    public $withinTransaction = false;
+
     public function up(): void
     {
-        Schema::create('student_awards', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('student_profile_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('award_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('given_by')->constrained('users')->cascadeOnDelete();
-            $table->text('note')->nullable();
-            $table->timestamp('given_at')->useCurrent();
-        });
+        if (!Schema::hasTable('student_awards')) {
+            Schema::create('student_awards', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('student_profile_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('award_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('given_by')->constrained('users')->cascadeOnDelete();
+                $table->text('note')->nullable();
+                $table->timestamp('given_at')->useCurrent();
+            });
+        }
     }
 
     public function down(): void

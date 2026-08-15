@@ -44,7 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── AUTH-003 ─────────────────────────────────────────────────────────
     // Sengaja TIDAK didaftarkan untuk role 'siswa' — dicek eksplisit di
-    // middleware inline di bawah.
+    // middleware inline di bawah, bukan cuma diasumsikan lewat frontend.
     // [SEC-012] throttle:5,1 juga di sini — user yang sudah login pun bisa
     // jadi vektor brute-force "current_password" kalau tokennya dicuri.
     Route::middleware(['role.not:siswa', 'throttle:5,1'])->post('/account/change-password', [AccountSecurityController::class, 'changePassword']);
@@ -98,6 +98,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('rombels/{rombel}/assign-teacher', [RombelController::class, 'assignTeacher']);
 
     // ── SEC-010 ──────────────────────────────────────────────────────────
+    // 'read-only' middleware = defense-in-depth: MASTER-010 (Anggota B)
+    // MENAMBAH endpoint statistik di grup prefix ini, dan middleware ini
+    // otomatis menolak method non-GET/HEAD apapun yang tidak sengaja
+    // terdaftar di sini — tidak bergantung semata pada Policy.
     Route::prefix('schools/{school}/dashboard')->middleware('read-only')->group(function () {
         Route::get('overview', [PrincipalDashboardController::class, 'overview']);
     });
@@ -141,13 +145,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/badges/{badge}', [BadgeController::class, 'destroy']);
     Route::get('/students/{studentProfile}/badges', [BadgeController::class, 'studentBadges']);
 
+    // ── MASTER-006 (Award Master & Give) ─────────────────────────────────────
     Route::get('/awards', [AwardController::class, 'index']);
     Route::post('/awards', [AwardController::class, 'store']);
+    Route::put('/awards/{award}', [AwardController::class, 'update']);
+    Route::delete('/awards/{award}', [AwardController::class, 'destroy']);
     Route::post('/students/{studentProfile}/awards', [AwardController::class, 'give']);
     Route::get('/students/{studentProfile}/awards', [AwardController::class, 'studentAwards']);
 });
 
 // Route download TERPISAH dari grup auth:sanctum di atas — signed URL
+// membawa otorisasinya sendiri lewat signature, TAPI tetap butuh user login
+// (Policy cek $request->user()), jadi tetap di-guard auth:sanctum, hanya
+// modelnya beda: middleware 'signed' Laravel bawaan yang validasi signature.
 Route::middleware(['auth:sanctum', 'signed'])
     ->get('report-exports/{reportExport}/download', [ReportExportController::class, 'download'])
     ->name('report-exports.download');

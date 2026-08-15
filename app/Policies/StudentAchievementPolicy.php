@@ -21,22 +21,22 @@ class StudentAchievementPolicy
     public function viewBadge(User $user, StudentBadge $studentBadge): bool
     {
         // Super Admin & Admin/Staff bisa melihat badge siapapun
-        if (in_array($user->role, ['super_admin', 'admin', 'kepala_sekolah', 'wali_kelas'])) {
+        if (in_array($user->role, ['super_admin', 'admin', 'kepala_sekolah', 'wali_kelas'], true)) {
             return true;
         }
 
-        // Siswa hanya bisa melihat badge milik sendiri
-        return $this->isOwnStudentRecord($user, $studentBadge);
+        // Siswa hanya bisa melihat badge milik sendiri (menggunakan student_profile_id)
+        return $this->isOwnStudentRecord($user, $studentBadge->student_profile_id);
     }
 
     public function viewAward(User $user, StudentAward $studentAward): bool
     {
         // Super Admin & Admin/Staff bisa melihat award siapapun
-        if (in_array($user->role, ['super_admin', 'admin', 'kepala_sekolah', 'wali_kelas'])) {
+        if (in_array($user->role, ['super_admin', 'admin', 'kepala_sekolah', 'wali_kelas'], true)) {
             return true;
         }
 
-        // Siswa hanya bisa melihat award milik sendiri
-        return $this->isOwnStudentRecord($user, $studentAward);
+        // Siswa hanya bisa melihat award milik sendiri (menggunakan student_profile_id)
+        return $this->isOwnStudentRecord($user, $studentAward->student_profile_id);
     }
 }

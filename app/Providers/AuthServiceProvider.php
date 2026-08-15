@@ -70,7 +70,7 @@ class AuthServiceProvider extends ServiceProvider
         StudentAward::class => StudentAchievementPolicy::class,
         SchoolFeatureSetting::class => SchoolFeatureSettingPolicy::class,
 
-        // --- SEC / Modul Lain ---
+        // --- SEC-008 & SEC Modul Lain ---
         Certificate::class => CertificatePolicy::class,
         StudentProfile::class => StudentProfilePolicy::class,
         Rombel::class => TeacherPolicy::class,
@@ -79,19 +79,19 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // 1. Register policies terlebih dahulu
         $this->registerPolicies();
 
-        // Gate flat-permission (mis. Gate::allows('report.export')) diturunkan otomatis
-        // dari config/permissions.php — satu sumber kebenaran, tidak dobel-maintain.
-        // Scope (sekolah/rombel/diri-sendiri) TETAP dicek terpisah lewat Policy per-model,
-        // Gate ini cuma menjawab "role ini punya permission ini atau tidak".
-        //
-        // Diratakan dulu jadi permission => [role, role, ...] SEBELUM Gate::define,
-        // supaya satu permission yang dimiliki beberapa role (mis. school.manage oleh
-        // super_admin & kepala_sekolah) tidak saling menimpa gara-gara Gate::define
-        // dipanggil ulang per role.
+        // 2. Global Bypass untuk Super Admin (Dijalankan sebelum Policy/Gate lain)
+        Gate::before(function ($user, $ability) {
+            if ($user->role === 'super_admin' || (method_exists($user, 'hasRole') && $user->hasRole('super_admin'))) {
+                return true;
+            }
+        });
+
+        // 3. Register permissions dari config/permissions.php
         $permissionRoles = [];
-        foreach (config('permissions') as $role => $permissions) {
+        foreach (config('permissions', []) as $role => $permissions) {
             foreach ($permissions as $permission) {
                 $permissionRoles[$permission][] = $role;
             }
@@ -102,10 +102,7 @@ class AuthServiceProvider extends ServiceProvider
         }
 
         // ── SEC-010 ──────────────────────────────────────────────────────
-        // Named ability untuk Policy yang tidak attached ke satu model (School
-        // sudah dipakai SchoolPolicy) — dashboard punya aturan scope BEDA
-        // dari manage sekolah biasa (khusus read-only), jadi butuh Policy &
-        // ability terpisah, bukan menambah method baru di SchoolPolicy.
+        // Named ability untuk Policy yang tidak attached ke satu model
         Gate::define('principal.dashboard.view', [PrincipalPolicy::class, 'viewDashboard']);
     }
 }
