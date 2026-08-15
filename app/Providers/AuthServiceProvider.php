@@ -84,23 +84,34 @@ class AuthServiceProvider extends ServiceProvider
         // 1. Register policies terlebih dahulu
         $this->registerPolicies();
 
-        // 2. Global Bypass untuk Super Admin (Dijalankan sebelum Policy/Gate lain)
-        Gate::before(function ($user, $ability) {
-            if ($user->role === 'super_admin' || (method_exists($user, 'hasRole') && $user->hasRole('super_admin'))) {
-                return true;
+        // 2. Global Bypass untuk Super Admin
+        Gate::before(function ($user, $ability, $arguments = []) {
+            $isSuperAdmin = $user->role === 'super_admin' || (method_exists($user, 'hasRole') && $user->hasRole('super_admin'));
+
+            if (! $isSuperAdmin) {
+                return null;
             }
+
+            // Urai parameter target
+            $target = is_array($arguments) ? ($arguments[0] ?? null) : $arguments;
+            if (is_array($target) && count($target) > 1) {
+                $target = $target[1] ?? $target[0];
+            }
+
+            // Jika entitas adalah PointConfig yang SUDAH dipublish, batasi imutabilitasnya
+            if ($target instanceof PointConfig) {
+                $isDraft = (isset($target->status) && strtolower((string) $target->status) === 'draft')
+                    || (array_key_exists('published_at', $target->getAttributes()) && is_null($target->published_at));
+
+                if (! $isDraft && in_array($ability, ['update', 'delete', 'publish'], true)) {
+                    return null;
+                }
+            }
+
+            return true;
         });
 
         // 3. Register permissions dari config/permissions.php
-        // Gate flat-permission (mis. Gate::allows('report.export')) diturunkan otomatis
-        // dari config/permissions.php — satu sumber kebenaran, tidak dobel-maintain.
-        // Scope (sekolah/rombel/diri-sendiri) TETAP dicek terpisah lewat Policy per-model,
-        // Gate ini cuma menjawab "role ini punya permission ini atau tidak".
-        //
-        // Diratakan dulu jadi permission => [role, role, ...] SEBELUM Gate::define,
-        // supaya satu permission yang dimiliki beberapa role (mis. school.manage oleh
-        // super_admin & kepala_sekolah) tidak saling menimpa gara-gara Gate::define
-        // dipanggil ulang per role.
         $permissionRoles = [];
         foreach (config('permissions', []) as $role => $permissions) {
             foreach ($permissions as $permission) {
@@ -113,10 +124,6 @@ class AuthServiceProvider extends ServiceProvider
         }
 
         // ── SEC-010 ──────────────────────────────────────────────────────
-        // Named ability untuk Policy yang tidak attached ke satu model (School
-        // sudah dipakai SchoolPolicy) — dashboard punya aturan scope BEDA
-        // dari manage sekolah biasa (khusus read-only), jadi butuh Policy &
-        // ability terpisah, bukan menambah method baru di SchoolPolicy.
         Gate::define('principal.dashboard.view', [PrincipalPolicy::class, 'viewDashboard']);
     }
 }

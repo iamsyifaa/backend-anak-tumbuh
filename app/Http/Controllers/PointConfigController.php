@@ -9,17 +9,6 @@ use App\Services\AuditLogService;
 use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 
-/**
- * SEC-005 — scope tugas ini: Policy + AUDIT untuk konfigurasi Poin, bukan
- * fitur lengkap aturan poin per habit/indicator/option (itu MASTER-005,
- * Anggota B, paralel hari yang sama). Controller ini SENGAJA minimal,
- * sama seperti HabitConfigController di AUTH-004 — cukup untuk
- * membuktikan Policy + audit trail tegak di level API.
- *
- * SETIAP mutasi (create/update/publish/delete) WAJIB tercatat di audit_logs
- * — ini bukan opsional, karena "Poin memengaruhi histori; perubahan harus
- * dapat diaudit" adalah acceptance criteria eksplisit SEC-005.
- */
 class PointConfigController extends Controller
 {
     use ApiResponse;
@@ -52,7 +41,11 @@ class PointConfigController extends Controller
     public function update(PointConfigRequest $request, School $school, PointConfig $pointConfig)
     {
         $this->ensureBelongsToSchool($school, $pointConfig);
-        $this->authorize('update', $pointConfig);
+        
+        // Proteksi Imutabilitas: Tolak 403 jika status bukan draft, terlepas dari Gate SuperAdmin
+        abort_if(! $this->isDraft($pointConfig), 403, 'Konfigurasi yang sudah dipublish bersifat immutable.');
+
+        $this->authorize('update', [$school, $pointConfig]);
 
         $before = $pointConfig->only(['version', 'effective_date']);
 
@@ -66,15 +59,14 @@ class PointConfigController extends Controller
         return $this->success($pointConfig, 'Draft konfigurasi poin berhasil diperbarui.');
     }
 
-    /**
-     * POST /api/schools/{school}/point-configs/{pointConfig}/publish
-     * Setelah publish, config immutable — versi lama tidak pernah berubah,
-     * histori point_transactions yang merujuk versi ini tetap valid selamanya.
-     */
     public function publish(Request $request, School $school, PointConfig $pointConfig)
     {
         $this->ensureBelongsToSchool($school, $pointConfig);
-        $this->authorize('publish', $pointConfig);
+
+        // Proteksi Imutabilitas
+        abort_if(! $this->isDraft($pointConfig), 403, 'Konfigurasi yang sudah dipublish tidak dapat dipublish ulang.');
+
+        $this->authorize('publish', [$school, $pointConfig]);
 
         $pointConfig->update([
             'status' => 'published',
@@ -93,16 +85,17 @@ class PointConfigController extends Controller
     public function destroy(Request $request, School $school, PointConfig $pointConfig)
     {
         $this->ensureBelongsToSchool($school, $pointConfig);
-        $this->authorize('delete', $pointConfig);
+
+        // Proteksi Imutabilitas
+        abort_if(! $this->isDraft($pointConfig), 403, 'Konfigurasi yang sudah dipublish tidak dapat dihapus.');
+
+        $this->authorize('delete', [$school, $pointConfig]);
 
         $snapshot = $pointConfig->only(['version', 'effective_date', 'status']);
         $pointConfigId = $pointConfig->id;
 
         $pointConfig->delete();
 
-        // Dicatat SETELAH delete tapi pakai snapshot id/data lama — baris audit
-        // tetap merujuk entity_id yang sudah tidak ada di point_configs (itu
-        // wajar untuk audit trail: menyimpan JEJAK, bukan referensi hidup).
         $deletedEntity = (new PointConfig())->forceFill(['id' => $pointConfigId]);
         $this->auditLog->record($request->user(), 'point_config.deleted', $deletedEntity, $snapshot);
 
@@ -112,5 +105,22 @@ class PointConfigController extends Controller
     private function ensureBelongsToSchool(School $school, PointConfig $pointConfig): void
     {
         abort_if($pointConfig->school_id !== $school->id, 404);
+    }
+
+    private function isDraft(PointConfig $config): bool
+    {
+        if (isset($config->status)) {
+            return strtolower((string) $config->status) === 'draft';
+        }
+
+        if (isset($config->is_published)) {
+            return ! (bool) $config->is_published;
+        }
+
+        if (array_key_exists('published_at', $config->getAttributes())) {
+            return is_null($config->published_at);
+        }
+
+        return true;
     }
 }

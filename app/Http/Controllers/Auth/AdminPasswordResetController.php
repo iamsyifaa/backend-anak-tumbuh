@@ -29,7 +29,19 @@ class AdminPasswordResetController extends Controller
     {
         $this->authorize('resetPassword', $user);
 
-        $this->passwordResetService->issueToken($user, issuedBy: $request->user());
+        $currentUser = $request->user();
+
+        // 1. Ditolak (403) jika user mencoba meriset password-nya sendiri via endpoint admin
+        if ($currentUser->id === $user->id) {
+            abort(403, 'Tidak dapat meriset password sendiri melalui endpoint admin.');
+        }
+
+        // 2. Ditolak (403) jika Super Admin mencoba meriset sesama Super Admin
+        if ($currentUser->isSuperAdmin() && $user->isSuperAdmin()) {
+            abort(403, 'Super admin tidak dapat meriset password milik super admin lain.');
+        }
+
+        $this->passwordResetService->issueToken($user, issuedBy: $currentUser);
 
         $user->forceFill(['must_change_password' => true])->save();
 
@@ -38,4 +50,4 @@ class AdminPasswordResetController extends Controller
 
         return $this->success(null, 'Reset password telah dipicu. Token dikirim ke pemilik akun.');
     }
-}   
+}
