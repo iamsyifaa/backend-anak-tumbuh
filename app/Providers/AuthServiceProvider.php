@@ -74,6 +74,8 @@ class AuthServiceProvider extends ServiceProvider
         Certificate::class => CertificatePolicy::class,
         StudentProfile::class => StudentProfilePolicy::class,
         Rombel::class => TeacherPolicy::class,
+
+        // --- SEC-011: Policy Otorisasi Export Report ---
         ReportExport::class => ReportExportPolicy::class,
     ];
 
