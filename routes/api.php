@@ -27,8 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // ── AUTH-003 ─────────────────────────────────────────────────────────
-    // Sengaja TIDAK didaftarkan untuk role 'siswa' — dicek eksplisit di
-    // middleware inline di bawah, bukan cuma diasumsikan lewat frontend.
     Route::middleware('role.not:siswa')->post('/account/change-password', [AccountSecurityController::class, 'changePassword']);
 
     Route::post('/users/{user}/force-reset-password', [AdminPasswordResetController::class, 'forceResetPassword']);
@@ -58,8 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ── SEC-006 ──────────────────────────────────────────────────────────
-    // Tidak di bawah prefix schools/{school} — submission itu milik siswa
-    // langsung (ownership by student_profile_id), bukan scoped per sekolah.
     Route::post('submissions', [SubmissionController::class, 'store']);
     Route::get('submissions/{submission}', [SubmissionController::class, 'show']);
     Route::patch('submissions/{submission}/lock', [SubmissionController::class, 'lock']);
@@ -78,8 +74,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/habits', [HabitController::class, 'index']);
     Route::post('/habits', [HabitController::class, 'store']);
     Route::put('/habits/{habit}', [HabitController::class, 'update']);
+    Route::delete('/habits/{habit}', [HabitController::class, 'destroy']);
+
     Route::post('/habits/{habit}/indicators', [HabitController::class, 'storeIndicator']);
+    Route::put('/indicators/{indicator}', [HabitController::class, 'updateIndicator']);
+    Route::delete('/indicators/{indicator}', [HabitController::class, 'destroyIndicator']);
+
+    Route::put('/indicator-options/{option}', [HabitController::class, 'updateOption']);
+    Route::delete('/indicator-options/{option}', [HabitController::class, 'destroyOption']);
+
     Route::post('/indicators/{indicator}/conditions', [HabitController::class, 'storeCondition']);
+    Route::delete('/indicator-conditions/{condition}', [HabitController::class, 'destroyCondition']);
 
     // ── MASTER-005 (Point Engine & History) ──────────────────────────────────
     Route::get('/students/{studentProfile}/points', [PointController::class, 'studentPoints']);
