@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\AcademicYear;
 use App\Models\ActivitySubmission;
+use App\Models\Award;
+use App\Models\Badge;
 use App\Models\Habit;
 use App\Models\HabitConfig;
 use App\Models\HabitIndicator;
@@ -12,6 +14,8 @@ use App\Models\PointConfig;
 use App\Models\School;
 use App\Models\User;
 use App\Policies\AcademicYearPolicy;
+use App\Policies\AwardPolicy;
+use App\Policies\BadgePolicy;
 use App\Policies\HabitConfigPolicy;
 use App\Policies\HabitPolicy;
 use App\Policies\PointConfigPolicy;
@@ -44,6 +48,10 @@ class AuthServiceProvider extends ServiceProvider
 
         // --- SEC-006: Policy Otorisasi Submisi & Lock ---
         ActivitySubmission::class => SubmissionPolicy::class,
+
+        // --- MASTER-006: Policy Otorisasi Badge & Award ---
+        Badge::class => BadgePolicy::class,
+        Award::class => AwardPolicy::class,
     ];
 
     public function boot(): void

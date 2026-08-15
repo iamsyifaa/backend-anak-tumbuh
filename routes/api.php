@@ -4,6 +4,8 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\Auth\AccountSecurityController;
 use App\Http\Controllers\Auth\AdminPasswordResetController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\AwardController;
+use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\HabitConfigController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\PointConfigController;
@@ -12,7 +14,6 @@ use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Controllers\SubmissionController;
-use App\Http\Controllers\TrophyController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\StudentQrLoginController;
 
@@ -93,9 +94,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── MASTER-005 (Point Engine & History) ──────────────────────────────────
     Route::get('/students/{studentProfile}/points', [PointController::class, 'studentPoints']);
 
-    // ── MASTER-006 (Trophies & Milestones) ──────────────────────────────────
-    Route::get('/trophies', [TrophyController::class, 'index']);
-    Route::get('/students/{studentProfile}/trophies', [TrophyController::class, 'studentTrophies']);
+    // ── MASTER-006 (Badge & Award — sesuai dokumen resmi, bukan "Trophy") ───
+    Route::get('/badges', [BadgeController::class, 'index']);
+    Route::post('/badges', [BadgeController::class, 'store']);
+    Route::put('/badges/{badge}', [BadgeController::class, 'update']);
+    Route::delete('/badges/{badge}', [BadgeController::class, 'destroy']);
+    Route::get('/students/{studentProfile}/badges', [BadgeController::class, 'studentBadges']);
+
+    Route::get('/awards', [AwardController::class, 'index']);
+    Route::post('/awards', [AwardController::class, 'store']);
+    Route::post('/students/{studentProfile}/awards', [AwardController::class, 'give']);
+    Route::get('/students/{studentProfile}/awards', [AwardController::class, 'studentAwards']);
 });
 
 // Route domain lain (school, student, activity, dll) ditambahkan oleh task
