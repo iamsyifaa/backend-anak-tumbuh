@@ -27,4 +27,12 @@ class ActivitySubmission extends Model
     {
         return $this->status === 'locked' || $this->locked_at !== null;
     }
+
+    // FIX (review MASTER-005, Anggota B): relasi ke submission_answers
+    // (Anggota C, BE-005/006/007) supaya PointCalculationService bisa
+    // menghitung poin dari jawaban tiap submission.
+    public function answers()
+    {
+        return $this->hasMany(SubmissionAnswer::class);
+    }
 }
