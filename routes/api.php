@@ -14,9 +14,13 @@ use App\Http\Controllers\StudentQrController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\TrophyController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\StudentQrLoginController;
 
 // ── AUTH-001 ────────────────────────────────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
+
+// ── BE-004 (Student QR Login) ────────────────────────────────────────────────
+Route::post('/auth/qr-login', StudentQrLoginController::class);
 
 // ── AUTH-003 (publik, belum login) ──────────────────────────────────────────
 Route::post('/forgot-password', [AccountSecurityController::class, 'forgotPassword']);
