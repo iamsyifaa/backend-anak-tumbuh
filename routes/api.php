@@ -29,7 +29,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // ── BE-004 (Student QR Login) ────────────────────────────────────────────────
-Route::post('/auth/qr-login', StudentQrLoginController::class);
+// [SEC-012] throttle:5,1 — mitigasi brute-force token QR login
+Route::post('/auth/qr-login', StudentQrLoginController::class)->middleware('throttle:5,1');
 
 // ── AUTH-003 (publik, belum login) ──────────────────────────────────────────
 // [SEC-012] throttle lebih ketat (3/menit) — endpoint ini bisa dipakai untuk
