@@ -23,6 +23,7 @@ use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentQrController;
 use App\Http\Controllers\StudentSelfController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 
 // ── AUTH-001 ────────────────────────────────────────────────────────────────
@@ -105,6 +106,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── SEC-009 ──────────────────────────────────────────────────────────
     Route::get('rombels/{rombel}', [RombelController::class, 'show']);
     Route::post('rombels/{rombel}/assign-teacher', [RombelController::class, 'assignTeacher']);
+
+    // ── MASTER-009 (Teacher API — monitoring rombel, READ ONLY) ───────────
+    // TIDAK ADA route input/rekap manual di sini maupun manapun di sistem.
+    Route::prefix('teacher/rombel')->group(function () {
+        Route::get('students', [TeacherController::class, 'students']);
+        Route::get('students/{studentProfile}', [TeacherController::class, 'studentDetail']);
+        Route::get('students/{studentProfile}/activity', [TeacherController::class, 'studentActivity']);
+        Route::get('students/{studentProfile}/progress', [TeacherController::class, 'studentProgress']);
+        Route::get('students/{studentProfile}/achievements', [TeacherController::class, 'studentAchievements']);
+        Route::get('export', [TeacherController::class, 'export']);
+    });
 
     // ── SEC-010 ──────────────────────────────────────────────────────────
     // 'read-only' middleware = defense-in-depth: MASTER-010 (Anggota B)
