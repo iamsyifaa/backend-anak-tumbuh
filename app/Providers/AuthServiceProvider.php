@@ -97,14 +97,29 @@ class AuthServiceProvider extends ServiceProvider
                 return null;
             }
 
+            // Ability ini MEMANG bukan wewenang Super Admin sama sekali (murni tugas
+            // Siswa/Wali Kelas) — jangan pernah di-bypass di sini, biar
+            // permission matrix (Gate::define) yang menentukan hasilnya.
+            $neverBypassForSuperAdmin = [
+                'activity.submit.digital',
+                'comment.create',
+                'comment.reply',
+            ];
+
+            if (in_array($ability, $neverBypassForSuperAdmin, true)) {
+                return null;
+            }
+
             // Urai parameter target
             $target = is_array($arguments) ? ($arguments[0] ?? null) : $arguments;
             if (is_array($target) && count($target) > 1) {
                 $target = $target[1] ?? $target[0];
             }
 
-            // Jika entitas adalah PointConfig yang SUDAH dipublish, batasi imutabilitasnya
-            if ($target instanceof PointConfig) {
+            // Jika entitas adalah konfigurasi ber-versi (PointConfig atau HabitConfig)
+            // yang SUDAH published, jangan bypass — immutability tetap berlaku
+            // walaupun user-nya Super Admin.
+            if ($target instanceof PointConfig || $target instanceof HabitConfig) {
                 $isDraft = (isset($target->status) && strtolower((string) $target->status) === 'draft')
                     || (array_key_exists('published_at', $target->getAttributes()) && is_null($target->published_at));
 
@@ -128,7 +143,7 @@ class AuthServiceProvider extends ServiceProvider
             Gate::define($permission, fn ($user) => in_array($user->role, $roles, true));
         }
 
-        // ── SEC-010 ──────────────────────────────────────────────────────
+        // ── SEC-010 ─────────────────────────────────────────────────────
         Gate::define('principal.dashboard.view', [PrincipalPolicy::class, 'viewDashboard']);
     }
 }

@@ -118,13 +118,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('export', [TeacherController::class, 'export']);
     });
 
-    // ── SEC-010 ──────────────────────────────────────────────────────────
+    // ── SEC-010 / MASTER-010 (School Analytics API) ──────────────────────
     // 'read-only' middleware = defense-in-depth: MASTER-010 (Anggota B)
     // MENAMBAH endpoint statistik di grup prefix ini, dan middleware ini
     // otomatis menolak method non-GET/HEAD apapun yang tidak sengaja
     // terdaftar di sini — tidak bergantung semata pada Policy.
     Route::prefix('schools/{school}/dashboard')->middleware('read-only')->group(function () {
         Route::get('overview', [PrincipalDashboardController::class, 'overview']);
+        Route::get('trend', [PrincipalDashboardController::class, 'trend']);
+        Route::get('rombels/{rombel}', [PrincipalDashboardController::class, 'rombelDetail']);
     });
 
     // ── SEC-011 ──────────────────────────────────────────────────────────
