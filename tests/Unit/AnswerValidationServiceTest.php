@@ -4,8 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\Habit;
 use App\Models\HabitIndicator;
-use App\Models\IndicatorOption;
 use App\Models\IndicatorCondition;
+use App\Models\IndicatorOption;
 use App\Services\AnswerEngine\AnswerValidationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -80,7 +80,7 @@ class AnswerValidationServiceTest extends TestCase
     public function test_conditional_indicator_rejected_when_parent_not_answered(): void
     {
         $habit = $this->makeHabit();
-        [$parent, ] = $this->makeIndicatorWithOption($habit->id, 'sudah_mandi');
+        [$parent] = $this->makeIndicatorWithOption($habit->id, 'sudah_mandi');
         [$child, $childOption] = $this->makeIndicatorWithOption($habit->id, 'pakai_sabun');
 
         IndicatorCondition::create([
@@ -100,7 +100,7 @@ class AnswerValidationServiceTest extends TestCase
     public function test_conditional_indicator_rejected_when_parent_answer_does_not_match(): void
     {
         $habit = $this->makeHabit();
-        [$parent, ] = $this->makeIndicatorWithOption($habit->id, 'sudah_mandi');
+        [$parent] = $this->makeIndicatorWithOption($habit->id, 'sudah_mandi');
         [, $wrongParentOption] = $this->makeIndicatorWithOption($habit->id, 'belum_mandi');
         [$child, $childOption] = $this->makeIndicatorWithOption($habit->id, 'pakai_sabun');
 
@@ -122,7 +122,7 @@ class AnswerValidationServiceTest extends TestCase
     public function test_option_not_belonging_to_indicator_is_rejected(): void
     {
         $habit = $this->makeHabit();
-        [$indicatorA, ] = $this->makeIndicatorWithOption($habit->id);
+        [$indicatorA] = $this->makeIndicatorWithOption($habit->id);
         [, $optionFromB] = $this->makeIndicatorWithOption($habit->id);
 
         $service = app(AnswerValidationService::class);

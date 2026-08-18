@@ -2,15 +2,15 @@
 
 namespace Tests\Unit;
 
+use App\Models\ActivitySubmission;
+use App\Models\ExpTransaction;
 use App\Models\Habit;
 use App\Models\HabitIndicator;
 use App\Models\IndicatorOption;
-use App\Models\ActivitySubmission;
+use App\Models\PointTransaction;
 use App\Models\StudentProfile;
 use App\Models\SubmissionAnswer;
 use App\Models\User;
-use App\Models\PointTransaction;
-use App\Models\ExpTransaction;
 use App\Services\Scoring\ScoringService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

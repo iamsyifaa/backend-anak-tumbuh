@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivitySubmission;
 use App\Models\AcademicYear;
+use App\Models\ActivityComment;
+use App\Models\ActivitySubmission;
 use App\Models\Enrollment;
 use App\Models\Rombel;
 use App\Models\School;
 use App\Models\StudentProfile;
 use App\Models\TeacherRombelAssignment;
 use App\Models\User;
-use App\Services\Comment\CommentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -58,7 +58,7 @@ class CommentPolicyTest extends TestCase
 
         $submission = $this->makeSubmissionInRombel($rombel, $academicYear);
 
-        $this->assertTrue($teacher->can('create', [\App\Models\ActivityComment::class, $submission]));
+        $this->assertTrue($teacher->can('create', [ActivityComment::class, $submission]));
     }
 
     public function test_wali_kelas_cannot_comment_on_other_rombel_student(): void
@@ -87,7 +87,7 @@ class CommentPolicyTest extends TestCase
 
         $submission = $this->makeSubmissionInRombel($otherRombel, $academicYear);
 
-        $this->assertFalse($teacher->can('create', [\App\Models\ActivityComment::class, $submission]));
+        $this->assertFalse($teacher->can('create', [ActivityComment::class, $submission]));
     }
 
     public function test_student_can_comment_on_own_submission(): void
@@ -106,7 +106,7 @@ class CommentPolicyTest extends TestCase
 
         $owner = $submission->studentProfile->user;
 
-        $this->assertTrue($owner->can('create', [\App\Models\ActivityComment::class, $submission]));
+        $this->assertTrue($owner->can('create', [ActivityComment::class, $submission]));
     }
 
     public function test_student_cannot_comment_on_another_students_submission(): void
@@ -125,6 +125,6 @@ class CommentPolicyTest extends TestCase
 
         $otherStudentUser = User::factory()->create(['role' => 'siswa']);
 
-        $this->assertFalse($otherStudentUser->can('create', [\App\Models\ActivityComment::class, $submission]));
+        $this->assertFalse($otherStudentUser->can('create', [ActivityComment::class, $submission]));
     }
 }

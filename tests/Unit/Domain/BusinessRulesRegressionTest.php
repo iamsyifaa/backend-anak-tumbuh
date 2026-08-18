@@ -43,9 +43,12 @@ class BusinessRulesRegressionTest extends TestCase
     #[DataProvider('initiativeBonusProvider')]
     public function test_initiative_bonus_rules(string $optionValue, bool $shouldGetBonus): void
     {
-        $this->markTestSkipped(
-            'Diverifikasi lewat integration test ScoringServiceCalculationTest — '.
-            'di sini cuma dokumentasi aturan dalam bentuk table-driven untuk referensi cepat.'
+        $isInitiative = ($optionValue === 'sadar_sendiri');
+
+        $this->assertSame(
+            $shouldGetBonus,
+            $isInitiative,
+            "Aturan inisiatif untuk opsi '{$optionValue}' tidak sesuai."
         );
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Services\StudentStatistics;
 
-use App\Queries\StudentPointQuery;
 use App\Queries\StudentExpQuery;
+use App\Queries\StudentPointQuery;
 
 class StudentStatisticsService
 {

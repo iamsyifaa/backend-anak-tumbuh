@@ -15,7 +15,7 @@ class StudentQrAuthService
      * lalu kembalikan data untuk sesi login.
      *
      * @throws AuthenticationException kalau token kosong/salah/revoked/
-     *         bukan token qr-login/siswa bukan Digital
+     *                                 bukan token qr-login/siswa bukan Digital
      */
     public function loginWithQr(?string $rawToken): array
     {

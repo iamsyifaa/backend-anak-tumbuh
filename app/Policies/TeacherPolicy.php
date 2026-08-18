@@ -15,9 +15,7 @@ use App\Services\TeacherAssignmentService;
  */
 class TeacherPolicy
 {
-    public function __construct(private readonly TeacherAssignmentService $assignmentService)
-    {
-    }
+    public function __construct(private readonly TeacherAssignmentService $assignmentService) {}
 
     public function viewRombel(User $user, Rombel $rombel): bool
     {

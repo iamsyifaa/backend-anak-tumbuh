@@ -10,8 +10,8 @@ class AnswerValidationService
     /**
      * Validasi satu set jawaban yang diajukan siswa, SEBELUM disimpan.
      *
-     * @param array<int,int> $answers  [indicator_id => indicator_option_id]
-     * @return array<int,string>  [indicator_id => pesan error] — kosong berarti semua valid
+     * @param  array<int,int>  $answers  [indicator_id => indicator_option_id]
+     * @return array<int,string> [indicator_id => pesan error] — kosong berarti semua valid
      */
     public function validate(array $answers): array
     {
@@ -25,6 +25,7 @@ class AnswerValidationService
             // indikator lain, mis. buat curi point_value lebih besar).
             if (! $option || (int) $option->indicator_id !== (int) $indicatorId) {
                 $errors[$indicatorId] = 'Opsi jawaban tidak valid untuk indikator ini.';
+
                 continue;
             }
 

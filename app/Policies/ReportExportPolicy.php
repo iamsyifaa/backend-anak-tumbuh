@@ -23,9 +23,7 @@ use App\Services\TeacherAssignmentService;
  */
 class ReportExportPolicy
 {
-    public function __construct(private readonly TeacherAssignmentService $assignmentService)
-    {
-    }
+    public function __construct(private readonly TeacherAssignmentService $assignmentService) {}
 
     public function download(User $user, ReportExport $export): bool
     {

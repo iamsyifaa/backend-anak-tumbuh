@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\CertificateTemplate;
 use App\Models\StudentAward;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CertificateGenerationService
@@ -38,7 +39,7 @@ class CertificateGenerationService
         ]);
 
         $filename = 'certificates/'.Str::uuid().'.pdf';
-        \Illuminate\Support\Facades\Storage::disk('local')->put($filename, $pdf->output());
+        Storage::disk('local')->put($filename, $pdf->output());
 
         return Certificate::create([
             'student_profile_id' => $studentAward->student_profile_id,

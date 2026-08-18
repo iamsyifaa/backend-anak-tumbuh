@@ -10,9 +10,10 @@ use App\Models\IndicatorOption;
 use App\Models\PointTransaction;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Services\Business\RankingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\TestCase;
 
 class SubmissionRegressionTest extends TestCase
 {
@@ -57,7 +58,6 @@ class SubmissionRegressionTest extends TestCase
             'retry 10x' => [10],
         ];
     }
-    
 
     #[DataProvider('retryCountProvider')]
     public function test_duplicate_submit_never_doubles_reward(int $retryCount): void
@@ -87,7 +87,7 @@ class SubmissionRegressionTest extends TestCase
         [$submissionB, $indicatorB, $optionB] = $this->makeSubmissionWithIndicator(50);
         app(SubmitDailyActivityAction::class)->execute($submissionB->fresh(), [$indicatorB->id => $optionB->id]);
 
-        $rankingService = app(\App\Services\Business\RankingService::class);
+        $rankingService = app(RankingService::class);
         $rankings = $rankingService->getRankingsForSchool(
             $submissionA->studentProfile->currentEnrollment()->first()?->academicYear?->school_id ?? 0
         );

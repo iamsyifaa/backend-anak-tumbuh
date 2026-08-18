@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\PointTransaction;
 use App\Models\ExpTransaction;
+use App\Models\PointTransaction;
+use App\Models\User;
 use App\Services\StudentStatistics\StudentStatisticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

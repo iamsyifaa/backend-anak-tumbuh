@@ -14,6 +14,7 @@ class ReportExportFactory extends Factory
     {
         return [
             'requested_by' => User::factory(),
+            'type' => 'recap', // <-- Ditambahkan field 'type' default
             'scope_type' => 'school',
             'scope_id' => 1,
             'file_path' => 'reports/'.$this->faker->uuid().'.xlsx',

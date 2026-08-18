@@ -8,7 +8,7 @@ use App\Models\StudentProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Certificate>
+ * @extends Factory<Certificate>
  */
 class CertificateFactory extends Factory
 {
@@ -18,10 +18,10 @@ class CertificateFactory extends Factory
     {
         return [
             'student_profile_id' => StudentProfile::factory(),
-            'award_id'           => Award::factory(),
-            'template_id'        => null,
-            'file_path'          => 'certificates/' . $this->faker->uuid() . '.pdf',
-            'issued_at'          => now(),
+            'award_id' => Award::factory(),
+            'template_id' => null,
+            'file_path' => 'certificates/'.$this->faker->uuid().'.pdf',
+            'issued_at' => now(),
         ];
     }
 }

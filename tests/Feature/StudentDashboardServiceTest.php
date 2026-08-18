@@ -32,7 +32,7 @@ class StudentDashboardServiceTest extends TestCase
         ]);
 
         $school = School::factory()->create();
-       $academicYear = AcademicYear::create([
+        $academicYear = AcademicYear::create([
             'school_id' => $school->id,
             'name' => 'TA 2026/2027',
             'is_active' => true,

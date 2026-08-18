@@ -5,13 +5,15 @@ namespace App\Services\Scoring;
 use App\Models\ActivitySubmission;
 use App\Models\PointConfig;
 use App\Models\SubmissionAnswer;
-use App\Services\Business\PointService;
 use App\Services\Business\ExpService;
+use App\Services\Business\PointService;
 use App\Services\DailyPeriod\DailyPeriodService;
+use Carbon\Carbon;
 
 class ScoringService
 {
     private const INITIATIVE_INDICATOR_CODE = 'inisiatif';
+
     private const INITIATIVE_OPTION_VALUE = 'sadar_sendiri';
 
     public function __construct(
@@ -22,7 +24,7 @@ class ScoringService
 
     public function scoreSubmission(ActivitySubmission $submission): void
     {
-        $activityDate = \Carbon\Carbon::parse($submission->activity_date);
+        $activityDate = Carbon::parse($submission->activity_date);
 
         if (! $this->dailyPeriodService->isPeriodOpenForSubmission($activityDate)) {
             // Konsisten dengan aturan BE-002: tidak ada backfill.

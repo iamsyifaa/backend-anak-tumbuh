@@ -13,9 +13,7 @@ class AcademicYearController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly AcademicYearService $academicYearService)
-    {
-    }
+    public function __construct(private readonly AcademicYearService $academicYearService) {}
 
     public function index(Request $request, School $school)
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\PasswordResetTokenIssued;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
@@ -16,9 +17,7 @@ class AccountSecurityController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly PasswordResetService $passwordResetService)
-    {
-    }
+    public function __construct(private readonly PasswordResetService $passwordResetService) {}
 
     /**
      * POST /api/account/change-password
@@ -64,7 +63,7 @@ class AccountSecurityController extends Controller
 
         if ($user && $user->isActive()) {
             $token = $this->passwordResetService->issueToken($user);
-            event(new \App\Events\PasswordResetTokenIssued($user, $token));
+            event(new PasswordResetTokenIssued($user, $token));
         }
 
         return $this->success(null, 'Jika akun ditemukan, instruksi reset password telah dikirim.');

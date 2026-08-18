@@ -59,7 +59,7 @@ class PermissionMatrixTest extends TestCase
             $this->assertSame(
                 in_array($role, $allowedRoles, true),
                 Gate::forUser($user)->allows($permission),
-                "Role '{$role}' expected " . (in_array($role, $allowedRoles, true) ? 'ALLOWED' : 'DENIED') . " for '{$permission}'"
+                "Role '{$role}' expected ".(in_array($role, $allowedRoles, true) ? 'ALLOWED' : 'DENIED')." for '{$permission}'"
             );
         }
     }

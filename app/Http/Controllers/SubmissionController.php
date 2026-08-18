@@ -23,9 +23,7 @@ class SubmissionController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly SubmissionGuardService $guard)
-    {
-    }
+    public function __construct(private readonly SubmissionGuardService $guard) {}
 
     public function store(SubmissionRequest $request)
     {

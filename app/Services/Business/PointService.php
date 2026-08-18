@@ -16,11 +16,10 @@ class PointService
      * agar histori transaksi tidak pernah berubah walau konfigurasi
      * Poin berubah di kemudian hari (immutable history principle).
      *
-     * @param  int         $userId
-     * @param  int         $amount      Bisa positif (dapat poin) atau negatif (koreksi/penalti).
-     * @param  string      $sourceType  Contoh: 'submission_answer'.
-     * @param  int         $sourceId    ID baris sumber, contoh: id submission_answers.
-     * @param  string|\DateTimeInterface $periodDate  Tanggal periode harian saat poin didapat.
+     * @param  int  $amount  Bisa positif (dapat poin) atau negatif (koreksi/penalti).
+     * @param  string  $sourceType  Contoh: 'submission_answer'.
+     * @param  int  $sourceId  ID baris sumber, contoh: id submission_answers.
+     * @param  string|\DateTimeInterface  $periodDate  Tanggal periode harian saat poin didapat.
      */
     public function record(
         int $userId,

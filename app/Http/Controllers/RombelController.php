@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rombel;
+use App\Models\User;
 use App\Services\TeacherAssignmentService;
 use App\Support\ApiResponse;
 use Illuminate\Http\Request;
@@ -17,9 +18,7 @@ class RombelController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly TeacherAssignmentService $assignmentService)
-    {
-    }
+    public function __construct(private readonly TeacherAssignmentService $assignmentService) {}
 
     public function show(Request $request, Rombel $rombel)
     {
@@ -45,7 +44,7 @@ class RombelController extends Controller
 
         $request->validate(['teacher_id' => ['required', 'exists:users,id']]);
 
-        $teacher = \App\Models\User::findOrFail($request->input('teacher_id'));
+        $teacher = User::findOrFail($request->input('teacher_id'));
         abort_unless($teacher->isWaliKelas(), 422, 'User yang ditugaskan harus berrole wali_kelas.');
 
         $assignment = $this->assignmentService->assign($teacher, $rombel);

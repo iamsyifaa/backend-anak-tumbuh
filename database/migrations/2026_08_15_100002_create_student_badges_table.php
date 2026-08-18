@@ -14,7 +14,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('student_badges')) {
+        if (! Schema::hasTable('student_badges')) {
             Schema::create('student_badges', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('student_profile_id')->constrained()->cascadeOnDelete();

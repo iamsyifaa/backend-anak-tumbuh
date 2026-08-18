@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 
 class StudentImportController extends Controller
 {
-    public function __construct(private StudentImportService $service)
-    {
-    }
+    public function __construct(private StudentImportService $service) {}
 
     /**
      * POST /api/students/import/preview

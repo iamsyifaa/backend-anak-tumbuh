@@ -7,6 +7,7 @@ use App\Models\Enrollment;
 use App\Models\ImportBatch;
 use App\Models\StudentProfile;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class StudentImportService
 
     public function preview(UploadedFile $file, int $academicYearId, User $uploader): ImportBatch
     {
-        $import = new StudentsImport();
+        $import = new StudentsImport;
         Excel::import($import, $file);
 
         $rows = $import->rows ?? collect();
@@ -67,7 +68,7 @@ class StudentImportService
             $birthDate = null;
             if ($birthDateRaw !== '') {
                 try {
-                    $birthDate = \Carbon\Carbon::parse($birthDateRaw)->format('Y-m-d');
+                    $birthDate = Carbon::parse($birthDateRaw)->format('Y-m-d');
                 } catch (\Throwable) {
                     $errors[] = "Format tanggal lahir tidak valid: '{$birthDateRaw}' (gunakan YYYY-MM-DD).";
                 }

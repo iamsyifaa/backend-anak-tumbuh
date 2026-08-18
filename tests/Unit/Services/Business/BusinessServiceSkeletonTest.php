@@ -2,14 +2,14 @@
 
 namespace Tests\Unit\Services\Business;
 
-use App\Services\Business\SubmissionService;
-use App\Services\Business\PointService;
+use App\Services\Business\AchievementService;
+use App\Services\Business\CommentService;
 use App\Services\Business\ExpService;
 use App\Services\Business\LevelService;
-use App\Services\Business\StreakService;
-use App\Services\Business\AchievementService;
+use App\Services\Business\PointService;
 use App\Services\Business\RankingService;
-use App\Services\Business\CommentService;
+use App\Services\Business\StreakService;
+use App\Services\Business\SubmissionService;
 use Tests\TestCase;
 
 class BusinessServiceSkeletonTest extends TestCase

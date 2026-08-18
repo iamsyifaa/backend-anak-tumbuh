@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Habit;
 use App\Models\HabitIndicator;
-use App\Models\IndicatorOption;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

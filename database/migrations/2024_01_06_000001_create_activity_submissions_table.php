@@ -42,4 +42,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('activity_submissions');
     }
-};  
+};

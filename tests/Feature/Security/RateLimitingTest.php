@@ -30,7 +30,7 @@ class RateLimitingTest extends TestCase
                 'password' => 'salahterus', // sengaja salah, fokus menguji rate limit bukan hasil login.
             ]);
 
-            $this->assertNotEquals(429, $response->getStatusCode(), "Percobaan ke-".($i + 1)." seharusnya belum kena limit.");
+            $this->assertNotEquals(429, $response->getStatusCode(), 'Percobaan ke-'.($i + 1).' seharusnya belum kena limit.');
         }
 
         // Percobaan ke-6 harus kena limit.

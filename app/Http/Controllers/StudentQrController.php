@@ -2,20 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Enrollment;
 use App\Models\StudentProfile;
 use App\Services\QrCredentialService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentQrController extends Controller
 {
-    public function __construct(private QrCredentialService $service)
-    {
-    }
+    public function __construct(private QrCredentialService $service) {}
 
     /**
      * POST /api/students/{studentProfile}/qr/generate

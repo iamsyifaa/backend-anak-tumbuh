@@ -16,7 +16,7 @@ class AuditLogService
 {
     /**
      * @param  array<string,mixed>|null  $metadata  snapshot before/after, atau data relevan lain.
-     *                                               JANGAN pernah masukkan password/token di sini.
+     *                                              JANGAN pernah masukkan password/token di sini.
      */
     public function record(?User $actor, string $action, Model $entity, ?array $metadata = null): AuditLog
     {

@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\StudentProfile;
 use App\Models\TeacherProfile;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -55,7 +56,7 @@ class UserProfileRelationTest extends TestCase
         $user = User::factory()->create(['role' => User::ROLE_SISWA]);
         StudentProfile::factory()->create(['user_id' => $user->id]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         StudentProfile::factory()->create(['user_id' => $user->id]);
     }
 }

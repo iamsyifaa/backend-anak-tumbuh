@@ -6,7 +6,6 @@ use App\Models\StudentProfile;
 use App\Models\StudentTrophy;
 use App\Models\Trophy;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class TrophyController extends Controller
 {

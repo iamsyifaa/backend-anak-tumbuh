@@ -13,9 +13,7 @@ class PointConfigController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly AuditLogService $auditLog)
-    {
-    }
+    public function __construct(private readonly AuditLogService $auditLog) {}
 
     public function index(Request $request, School $school)
     {
@@ -41,7 +39,7 @@ class PointConfigController extends Controller
     public function update(PointConfigRequest $request, School $school, PointConfig $pointConfig)
     {
         $this->ensureBelongsToSchool($school, $pointConfig);
-        
+
         // Proteksi Imutabilitas: Tolak 403 jika status bukan draft, terlepas dari Gate SuperAdmin
         abort_if(! $this->isDraft($pointConfig), 403, 'Konfigurasi yang sudah dipublish bersifat immutable.');
 
@@ -96,7 +94,7 @@ class PointConfigController extends Controller
 
         $pointConfig->delete();
 
-        $deletedEntity = (new PointConfig())->forceFill(['id' => $pointConfigId]);
+        $deletedEntity = (new PointConfig)->forceFill(['id' => $pointConfigId]);
         $this->auditLog->record($request->user(), 'point_config.deleted', $deletedEntity, $snapshot);
 
         return $this->success(null, 'Draft konfigurasi poin berhasil dihapus.');

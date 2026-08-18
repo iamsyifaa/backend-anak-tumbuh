@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ImportBatch extends Model
 {
     public const STATUS_PREVIEWED = 'previewed';
+
     public const STATUS_COMMITTED = 'committed';
+
     public const STATUS_EXPIRED = 'expired';
 
     protected $fillable = [

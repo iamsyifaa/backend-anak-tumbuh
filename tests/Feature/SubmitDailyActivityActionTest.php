@@ -7,10 +7,10 @@ use App\Models\ActivitySubmission;
 use App\Models\Habit;
 use App\Models\HabitIndicator;
 use App\Models\IndicatorOption;
-use App\Models\StudentProfile;
-use App\Models\User;
 use App\Models\PointTransaction;
+use App\Models\StudentProfile;
 use App\Models\SubmissionAnswer;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -73,7 +73,7 @@ class SubmitDailyActivityActionTest extends TestCase
 
     public function test_invalid_answer_is_rejected_without_side_effects(): void
     {
-        [$submission, ,] = $this->makeSubmissionWithIndicator();
+        [$submission] = $this->makeSubmissionWithIndicator();
 
         // Kirim option_id yang tidak eksis — memicu validation error dari BE-005
         $result = app(SubmitDailyActivityAction::class)->execute($submission, [

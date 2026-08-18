@@ -20,8 +20,7 @@ class PrincipalDashboardController extends Controller
     public function __construct(
         private readonly RankingService $rankingService,
         private readonly LevelService $levelService,
-    ) {
-    }
+    ) {}
 
     /**
      * GET /api/schools/{school}/dashboard/overview

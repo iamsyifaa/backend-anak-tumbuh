@@ -12,9 +12,7 @@ class AdminPasswordResetController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly PasswordResetService $passwordResetService)
-    {
-    }
+    public function __construct(private readonly PasswordResetService $passwordResetService) {}
 
     /**
      * POST /api/users/{user}/force-reset-password

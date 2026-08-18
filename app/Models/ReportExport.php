@@ -9,7 +9,15 @@ class ReportExport extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['requested_by', 'scope_type', 'scope_id', 'file_path', 'format', 'expires_at'];
+    protected $fillable = [
+        'requested_by',
+        'type', // <-- Ditambahkan ke fillable
+        'scope_type',
+        'scope_id',
+        'file_path',
+        'format',
+        'expires_at',
+    ];
 
     protected $casts = ['expires_at' => 'datetime'];
 

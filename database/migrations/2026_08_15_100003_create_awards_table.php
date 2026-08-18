@@ -29,7 +29,7 @@ return new class extends Migration
 
     public function up(): void
     {
-        if (!Schema::hasTable('awards')) {
+        if (! Schema::hasTable('awards')) {
             Schema::create('awards', function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->unique();

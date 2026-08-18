@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivitySubmission;
 use App\Models\AcademicYear;
+use App\Models\ActivitySubmission;
 use App\Models\Award;
 use App\Models\Badge;
 use App\Models\Certificate;
@@ -22,15 +22,15 @@ class StudentDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function makeStudentWithEnrollment(School $school = null): StudentProfile
+    private function makeStudentWithEnrollment(?School $school = null): StudentProfile
     {
         $school = $school ?? School::factory()->create();
         $user = User::factory()->create(['role' => User::ROLE_SISWA, 'school_id' => $school->id]);
         $profile = StudentProfile::factory()->create(['user_id' => $user->id]);
-         $year = AcademicYear::firstOrCreate(
-        ['school_id' => $school->id, 'name' => '2025/2026'],
-        AcademicYear::factory()->make(['school_id' => $school->id, 'name' => '2025/2026'])->toArray()
-    );
+        $year = AcademicYear::firstOrCreate(
+            ['school_id' => $school->id, 'name' => '2025/2026'],
+            AcademicYear::factory()->make(['school_id' => $school->id, 'name' => '2025/2026'])->toArray()
+        );
         Enrollment::create([
             'student_profile_id' => $profile->id,
             'academic_year_id' => $year->id,

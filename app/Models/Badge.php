@@ -11,6 +11,7 @@ class Badge extends Model
     use HasFactory;
 
     public const TARGET_TOTAL_POINTS = 'total_points';
+
     public const TARGET_TOTAL_EXP = 'total_exp';
 
     protected $fillable = [

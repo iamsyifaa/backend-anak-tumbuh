@@ -12,10 +12,13 @@ class StudentProfile extends Model
     use HasFactory;
 
     public const METHOD_DIGITAL = 'digital';
+
     public const METHOD_MANUAL = 'manual';
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_GRADUATED = 'graduated';
+
     public const STATUS_TRANSFERRED = 'transferred';
 
     protected $fillable = [

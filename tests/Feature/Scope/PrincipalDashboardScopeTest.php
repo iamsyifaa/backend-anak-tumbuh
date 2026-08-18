@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Principal;
 
+use App\Http\Middleware\EnsureReadOnlyAccess;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class PrincipalDashboardScopeTest extends TestCase
@@ -76,10 +80,10 @@ class PrincipalDashboardScopeTest extends TestCase
         // seharusnya sudah 404 dari router. Untuk membuktikan middleware itu
         // sendiri (bukan cuma "rute tidak ada"), kita test langsung via
         // instance middleware terpisah.
-        $middleware = new \App\Http\Middleware\EnsureReadOnlyAccess();
+        $middleware = new EnsureReadOnlyAccess;
 
-        $getRequest = \Illuminate\Http\Request::create('/test', 'GET');
-        $postRequest = \Illuminate\Http\Request::create('/test', 'POST');
+        $getRequest = Request::create('/test', 'GET');
+        $postRequest = Request::create('/test', 'POST');
 
         $passed = false;
         $middleware->handle($getRequest, function () use (&$passed) {
@@ -89,13 +93,13 @@ class PrincipalDashboardScopeTest extends TestCase
         });
         $this->assertTrue($passed, 'GET request seharusnya lolos middleware read-only.');
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $middleware->handle($postRequest, fn () => response('should not reach here'));
     }
 
     public function test_dashboard_route_group_has_no_mutation_routes_registered(): void
     {
-        $routes = collect(\Illuminate\Support\Facades\Route::getRoutes())
+        $routes = collect(Route::getRoutes())
             ->filter(fn ($route) => str_starts_with($route->uri(), 'api/schools/{school}/dashboard'));
 
         foreach ($routes as $route) {

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\ActivitySubmission;
 use App\Models\Badge;
 use App\Models\Enrollment;
 use App\Models\ExpTransaction;

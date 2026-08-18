@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Award;
-use App\Models\CertificateTemplate;
 use App\Models\Certificate;
+use App\Models\CertificateTemplate;
 use App\Models\StudentAward;
 use App\Models\StudentProfile;
 use App\Models\User;

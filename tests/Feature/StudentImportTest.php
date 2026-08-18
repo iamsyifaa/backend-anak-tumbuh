@@ -3,15 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\ImportBatch;
 use App\Models\School;
 use App\Models\StudentProfile;
 use App\Models\User;
 use App\Services\StudentImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Excel as ExcelFacade;
-use Maatwebsite\Excel\Excel;
 use Tests\TestCase;
 
 class StudentImportTest extends TestCase

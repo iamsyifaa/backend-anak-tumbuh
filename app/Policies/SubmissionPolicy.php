@@ -10,7 +10,7 @@ use App\Policies\Concerns\ChecksStudentOwnership;
  * SEC-006 — Policy inti: "siswa hanya dapat mengakses dirinya sendiri, tidak
  * ada pengisian susulan untuk hari terlewat, setelah dikirim jawaban terkunci".
  *
- * SEC-008 — Refactor: Ownership check ditarik ke trait ChecksStudentOwnership 
+ * SEC-008 — Refactor: Ownership check ditarik ke trait ChecksStudentOwnership
  * (dipakai bersama StudentAchievementPolicy & CertificatePolicy) agar DRY.
  */
 class SubmissionPolicy

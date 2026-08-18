@@ -18,11 +18,10 @@ class ExpService
      * agar histori transaksi tidak pernah berubah walau konfigurasi
      * berubah di kemudian hari (immutable history principle).
      *
-     * @param  int         $userId
-     * @param  int         $amount      Bisa positif (dapat EXP) atau negatif (koreksi).
-     * @param  string      $sourceType  Contoh: 'submission_answer'.
-     * @param  int         $sourceId    ID baris sumber, contoh: id submission_answers.
-     * @param  string|\DateTimeInterface $periodDate  Tanggal periode harian saat EXP didapat.
+     * @param  int  $amount  Bisa positif (dapat EXP) atau negatif (koreksi).
+     * @param  string  $sourceType  Contoh: 'submission_answer'.
+     * @param  int  $sourceId  ID baris sumber, contoh: id submission_answers.
+     * @param  string|\DateTimeInterface  $periodDate  Tanggal periode harian saat EXP didapat.
      */
     public function record(
         int $userId,

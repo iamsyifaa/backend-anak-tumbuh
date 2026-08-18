@@ -4,6 +4,7 @@ namespace Tests\Feature\Security;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -49,12 +50,12 @@ class QrCredentialRevokeSecurityTest extends TestCase
         // implementasi tabel QR itu sendiri.
         foreach (['super_admin', 'kepala_sekolah'] as $role) {
             $user = User::factory()->create(['role' => $role]);
-            $this->assertTrue(\Illuminate\Support\Facades\Gate::forUser($user)->allows('student.qr.revoke'));
+            $this->assertTrue(Gate::forUser($user)->allows('student.qr.revoke'));
         }
 
         foreach (['wali_kelas', 'siswa'] as $role) {
             $user = User::factory()->create(['role' => $role]);
-            $this->assertFalse(\Illuminate\Support\Facades\Gate::forUser($user)->allows('student.qr.revoke'));
+            $this->assertFalse(Gate::forUser($user)->allows('student.qr.revoke'));
         }
     }
 

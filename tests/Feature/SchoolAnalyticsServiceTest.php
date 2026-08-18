@@ -79,7 +79,7 @@ class SchoolAnalyticsServiceTest extends TestCase
         $this->assertSame(100.0, $average);
     }
 
-   public function test_rombel_achievements_group_correctly(): void
+    public function test_rombel_achievements_group_correctly(): void
     {
         [$school, $academicYear] = $this->makeSchoolWithYear();
         $rombelA = Rombel::create(['school_id' => $school->id, 'academic_year_id' => $academicYear->id, 'name' => 'Kelas 1A']);
@@ -99,7 +99,7 @@ class SchoolAnalyticsServiceTest extends TestCase
 
     public function test_trend_returns_requested_number_of_days(): void
     {
-        [$school,] = $this->makeSchoolWithYear();
+        [$school] = $this->makeSchoolWithYear();
 
         $trend = app(SchoolAnalyticsService::class)->getSchoolTrend($school->id, 7);
 
@@ -108,7 +108,7 @@ class SchoolAnalyticsServiceTest extends TestCase
 
     public function test_ranking_data_is_null_when_disabled(): void
     {
-        [$school,] = $this->makeSchoolWithYear();
+        [$school] = $this->makeSchoolWithYear();
         SchoolFeatureSetting::create(['school_id' => $school->id, 'ranking_cohort_enabled' => false]);
 
         $rankingData = app(SchoolAnalyticsService::class)->getRankingData($school->id);
@@ -129,7 +129,7 @@ class SchoolAnalyticsServiceTest extends TestCase
         $this->assertSame(100, $rankingData->first()['total_points']);
     }
 
-  public function test_participation_rate_counts_only_locked_submissions_today(): void
+    public function test_participation_rate_counts_only_locked_submissions_today(): void
     {
         [$school, $academicYear] = $this->makeSchoolWithYear();
 

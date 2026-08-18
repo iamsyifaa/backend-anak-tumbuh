@@ -39,7 +39,7 @@ class RankingService
 
     /**
      * @return Collection<int, array{user_id: int, total_points: int}>
-     *         Terurut dari poin tertinggi ke terendah.
+     *                                                                 Terurut dari poin tertinggi ke terendah.
      */
     public function getRankingsForSchool(int $schoolId): Collection
     {

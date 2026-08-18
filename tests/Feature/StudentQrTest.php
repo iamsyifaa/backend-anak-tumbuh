@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicYear;
-use App\Models\Enrollment;
 use App\Models\School;
 use App\Models\StudentProfile;
 use App\Models\User;

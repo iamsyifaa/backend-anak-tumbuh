@@ -17,6 +17,7 @@ use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SchoolFeatureSettingController;
+use App\Http\Controllers\SchoolReportExportController;
 use App\Http\Controllers\StudentAchievementController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\StudentImportController;
@@ -81,6 +82,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // ── SEC-007 ──────────────────────────────────────────────────────
         Route::get('feature-settings', [SchoolFeatureSettingController::class, 'show']);
         Route::put('feature-settings', [SchoolFeatureSettingController::class, 'update']);
+
+        // ── SCHOOL REPORTS EXPORT ─────────────────────────────────────────
+        Route::post('reports/export', [SchoolReportExportController::class, 'store']);
     });
 
     // ── SEC-006 ──────────────────────────────────────────────────────────

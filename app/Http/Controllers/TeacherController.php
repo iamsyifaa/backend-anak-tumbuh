@@ -29,9 +29,7 @@ class TeacherController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly TeacherAssignmentService $assignmentService)
-    {
-    }
+    public function __construct(private readonly TeacherAssignmentService $assignmentService) {}
 
     /**
      * Ambil rombel_id aktif guru yang login, 404 kalau belum ada
