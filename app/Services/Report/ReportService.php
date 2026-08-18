@@ -20,13 +20,6 @@ class ReportService
         private LevelService $levelService,
     ) {}
 
-    /**
-     * Report per siswa untuk 1 rentang tanggal. Sumber angka SAMA PERSIS
-     * dengan yang dipakai StudentDashboardService (BE-009) — total_points
-     * dan total_exp dihitung dari tabel transaksi yang sama, bukan formula
-     * baru. Bedanya cuma di sini bisa di-filter per rentang tanggal
-     * (dashboard selalu "sepanjang waktu" + tren 7 hari terakhir saja).
-     */
     public function getStudentReport(StudentProfile $studentProfile, Carbon $startDate, Carbon $endDate): array
     {
         $userId = $studentProfile->user_id;
@@ -56,22 +49,68 @@ class ReportService
     }
 
     /**
-     * Report untuk semua siswa di 1 rombel, periode tertentu.
-     * 1 query utama per metrik (hindari N+1 walau iterasi per siswa,
-     * karena jumlah siswa per rombel biasanya kecil/wajar).
+     * PERFORMANCE FIX: dulu memanggil getStudentReport() per siswa di dalam
+     * loop — untuk N siswa jadi 3×N query (Poin, EXP, submitted_days masing-
+     * masing per siswa). Sekarang 3 query TOTAL untuk seluruh rombel
+     * (masing-masing 1 query ber-GROUP BY), digabung di memori.
      */
     public function getRombelReport(int $rombelId, Carbon $startDate, Carbon $endDate): array
     {
-        $studentProfileIds = StudentProfile::whereHas(
+        $students = StudentProfile::whereHas(
             'currentEnrollment',
             fn ($q) => $q->where('rombel_id', $rombelId)->where('status', 'active')
-        )->pluck('id');
+        )->get();
 
-        $students = StudentProfile::whereIn('id', $studentProfileIds)->get();
+        if ($students->isEmpty()) {
+            return [
+                'rombel_id' => $rombelId,
+                'period' => ['start' => $startDate->toDateString(), 'end' => $endDate->toDateString()],
+                'student_count' => 0,
+                'students' => [],
+            ];
+        }
 
-        $rows = $students->map(
-            fn (StudentProfile $sp) => $this->getStudentReport($sp, $startDate, $endDate)
-        );
+        $userIds = $students->pluck('user_id');
+        $studentProfileIds = $students->pluck('id');
+        $startStr = $startDate->toDateString();
+        $endStr = $endDate->toDateString();
+
+        $pointsByUser = PointTransaction::whereIn('user_id', $userIds)
+            ->whereBetween('period_date', [$startStr, $endStr])
+            ->selectRaw('user_id, SUM(amount) as total')
+            ->groupBy('user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        $expByUser = ExpTransaction::whereIn('user_id', $userIds)
+            ->whereBetween('period_date', [$startStr, $endStr])
+            ->selectRaw('user_id, SUM(amount) as total')
+            ->groupBy('user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        $submittedByProfile = ActivitySubmission::whereIn('student_profile_id', $studentProfileIds)
+            ->where('status', 'locked')
+            ->whereBetween('activity_date', [$startStr, $endStr])
+            ->selectRaw('student_profile_id, COUNT(*) as total')
+            ->groupBy('student_profile_id')
+            ->get()
+            ->keyBy('student_profile_id');
+
+        $rows = $students->map(function (StudentProfile $sp) use ($pointsByUser, $expByUser, $submittedByProfile, $startDate, $endDate) {
+            $totalPoints = (int) ($pointsByUser->get($sp->user_id)->total ?? 0);
+            $totalExp = (int) ($expByUser->get($sp->user_id)->total ?? 0);
+
+            return [
+                'student_profile_id' => $sp->id,
+                'full_name' => $sp->full_name,
+                'period' => ['start' => $startDate->toDateString(), 'end' => $endDate->toDateString()],
+                'total_points' => $totalPoints,
+                'total_exp' => $totalExp,
+                'level' => $this->levelService->calculateLevel($totalExp),
+                'submitted_days' => (int) ($submittedByProfile->get($sp->id)->total ?? 0),
+            ];
+        });
 
         return [
             'rombel_id' => $rombelId,
@@ -81,11 +120,6 @@ class ReportService
         ];
     }
 
-    /**
-     * Report tingkat sekolah — DELEGASI ke SchoolAnalyticsService (BE-011),
-     * tidak menghitung ulang rata-rata/tren. "Reconcile" terjamin karena
-     * ini panggil fungsi yang PERSIS sama dengan yang dipakai dashboard.
-     */
     public function getSchoolReport(int $schoolId, int $trendDays = 30): array
     {
         return [
@@ -96,9 +130,6 @@ class ReportService
         ];
     }
 
-    /**
-     * Report pencapaian (Badge + Award) untuk 1 siswa dalam rentang tanggal.
-     */
     public function getAchievementReport(StudentProfile $studentProfile, Carbon $startDate, Carbon $endDate): array
     {
         $badges = StudentBadge::with('badge')

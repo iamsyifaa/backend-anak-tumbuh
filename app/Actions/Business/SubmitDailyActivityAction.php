@@ -31,23 +31,40 @@ class SubmitDailyActivityAction
             return ['status' => 'validation_failed', 'submission' => $submission, 'errors' => $errors];
         }
 
-        DB::transaction(function () use ($submission, $answers) {
+        $result = DB::transaction(function () use ($submission, $answers) {
+            // lockForUpdate(): kunci baris ini di level DB sepanjang transaksi.
+            // Kalau ada request lain masuk BERSAMAAN untuk submission yang sama,
+            // dia akan MENUNGGU transaksi ini selesai, baru baca status TERBARU
+            // (yang sudah 'locked') — bukan status lama yang masih 'draft'.
+            // Ini menutup celah race condition yang tidak tertangkap test retry
+            // berurutan (SubmissionRegressionTest hanya menguji panggilan
+            // sekuensial, bukan konkuren).
+            $lockedSubmission = ActivitySubmission::where('id', $submission->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSubmission->isLocked()) {
+                return ['status' => 'already_submitted', 'submission' => $lockedSubmission];
+            }
+
             foreach ($answers as $indicatorId => $optionId) {
                 SubmissionAnswer::updateOrCreate(
-                    ['activity_submission_id' => $submission->id, 'indicator_id' => $indicatorId],
+                    ['activity_submission_id' => $lockedSubmission->id, 'indicator_id' => $indicatorId],
                     ['indicator_option_id' => $optionId]
                 );
             }
 
-            $this->scoringService->scoreSubmission($submission->fresh());
+            $this->scoringService->scoreSubmission($lockedSubmission->fresh());
 
-            $userId = $submission->studentProfile->user_id;
-            $this->streakService->recordActivity($userId, $submission->activity_date);
-            $this->badgeEvaluationService->checkAndAwardBadges($submission->studentProfile);
+            $userId = $lockedSubmission->studentProfile->user_id;
+            $this->streakService->recordActivity($userId, $lockedSubmission->activity_date);
+            $this->badgeEvaluationService->checkAndAwardBadges($lockedSubmission->studentProfile);
 
-            $submission->update(['status' => 'locked', 'submitted_at' => now(), 'locked_at' => now()]);
+            $lockedSubmission->update(['status' => 'locked', 'submitted_at' => now(), 'locked_at' => now()]);
+
+            return ['status' => 'submitted', 'submission' => $lockedSubmission->fresh()];
         });
 
-        return ['status' => 'submitted', 'submission' => $submission->fresh()];
+        return $result;
     }
 }
