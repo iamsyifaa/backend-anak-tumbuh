@@ -14,6 +14,7 @@ use App\Http\Controllers\PointConfigController;
 use App\Http\Controllers\PointController;
 use App\Http\Controllers\PrincipalDashboardController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\ReportGenerateController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SchoolFeatureSettingController;
@@ -133,7 +134,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('rombels/{rombel}', [PrincipalDashboardController::class, 'rombelDetail']);
     });
 
-    // ── SEC-011 ──────────────────────────────────────────────────────────
+    // ── MASTER-011 & SEC-011 (Report Exports) ───────────────────────────
+    Route::post('report-exports', [ReportGenerateController::class, 'store']);
     Route::post('report-exports/{reportExport}/link', [ReportExportController::class, 'generateLink']);
 
     // ── STUDENT IMPORT ───────────────────────────────────────────────────
