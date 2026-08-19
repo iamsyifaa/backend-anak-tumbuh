@@ -8,7 +8,13 @@ class StudentStreak extends Model
 {
     protected $fillable = ['user_id', 'month', 'year', 'opportunities_used', 'current_streak_days', 'last_active_date'];
 
-    protected $casts = ['last_active_date' => 'date'];
+    protected $casts = 
+    [
+        'last_active_date' => 'date',
+        'opportunities_used' => 'integer',
+        'current_streak_days' => 'integer',
+
+    ];
 
     public function hasOpportunityLeft(): bool
     {
