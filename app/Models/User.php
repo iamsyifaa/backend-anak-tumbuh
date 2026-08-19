@@ -15,15 +15,11 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
-
     public const ROLE_KEPALA_SEKOLAH = 'kepala_sekolah';
-
     public const ROLE_WALI_KELAS = 'wali_kelas';
-
     public const ROLE_SISWA = 'siswa';
 
     public const STATUS_ACTIVE = 'active';
-
     public const STATUS_INACTIVE = 'inactive';
 
     protected $fillable = [
@@ -73,11 +69,6 @@ class User extends Authenticatable
         return $this->hasOne(StudentProfile::class);
     }
 
-    public function teacherRombelAssignments(): HasMany
-    {
-        return $this->hasMany(TeacherRombelAssignment::class, 'teacher_id');
-    }
-
     public function getProfileAttribute(): ?object
     {
         return match ($this->role) {
@@ -105,5 +96,13 @@ class User extends Authenticatable
     public function isSiswa(): bool
     {
         return $this->role === self::ROLE_SISWA;
+    }
+
+    // FIX: relasi ini dibutuhkan ActivityCommentPolicy (fitur Comment,
+    // PR #12) tapi kelewat ditambahkan pas merge — ditambahkan di sini
+    // untuk memperbaiki CommentPolicyTest yang gagal.
+    public function teacherRombelAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherRombelAssignment::class, 'teacher_id');
     }
 }
