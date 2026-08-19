@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
+use App\Models\Rombel;
 use App\Models\School;
 use App\Models\StudentProfile;
 use App\Models\User;
@@ -27,15 +28,21 @@ class StudentImportTest extends TestCase
         return AcademicYear::factory()->create(['school_id' => $school->id]);
     }
 
+    private function makeRombel(AcademicYear $year): Rombel
+    {
+        return Rombel::factory()->create(['school_id' => $year->school_id]);
+    }
+
     public function test_preview_does_not_persist_any_student_data(): void
     {
         $uploader = $this->makeUploader();
         $year = $this->makeAcademicYear();
+        $rombel = $this->makeRombel($year);
 
         $file = $this->buildCsv([
             ['full_name', 'nisn', 'birth_date', 'method', 'rombel_id'],
-            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', '1'],
-            ['Ani Wulandari', '1234567891', '2015-06-01', 'manual', '1'],
+            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', (string) $rombel->id],
+            ['Ani Wulandari', '1234567891', '2015-06-01', 'manual', (string) $rombel->id],
         ]);
 
         $service = app(StudentImportService::class);
@@ -51,11 +58,12 @@ class StudentImportTest extends TestCase
     {
         $uploader = $this->makeUploader();
         $year = $this->makeAcademicYear();
+        $rombel = $this->makeRombel($year);
 
         $file = $this->buildCsv([
             ['full_name', 'nisn', 'birth_date', 'method', 'rombel_id'],
-            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', '1'],
-            ['', '1234567891', 'tanggal-salah', 'entah', '1'], // baris invalid
+            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', (string) $rombel->id],
+            ['', '1234567891', 'tanggal-salah', 'entah', (string) $rombel->id],
         ]);
 
         $service = app(StudentImportService::class);
@@ -76,11 +84,12 @@ class StudentImportTest extends TestCase
     {
         $uploader = $this->makeUploader();
         $year = $this->makeAcademicYear();
+        $rombel = $this->makeRombel($year);
 
         $file = $this->buildCsv([
             ['full_name', 'nisn', 'birth_date', 'method', 'rombel_id'],
-            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', '1'],
-            ['Budi Duplikat', '1234567890', '2015-05-01', 'digital', '1'],
+            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', (string) $rombel->id],
+            ['Budi Duplikat', '1234567890', '2015-05-01', 'digital', (string) $rombel->id],
         ]);
 
         $service = app(StudentImportService::class);
@@ -94,12 +103,13 @@ class StudentImportTest extends TestCase
     {
         $uploader = $this->makeUploader();
         $year = $this->makeAcademicYear();
+        $rombel = $this->makeRombel($year);
 
         StudentProfile::factory()->create(['nisn' => '1234567890']);
 
         $file = $this->buildCsv([
             ['full_name', 'nisn', 'birth_date', 'method', 'rombel_id'],
-            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', '1'],
+            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', (string) $rombel->id],
         ]);
 
         $service = app(StudentImportService::class);
@@ -113,10 +123,11 @@ class StudentImportTest extends TestCase
     {
         $uploader = $this->makeUploader();
         $year = $this->makeAcademicYear();
+        $rombel = $this->makeRombel($year);
 
         $file = $this->buildCsv([
             ['full_name', 'nisn', 'birth_date', 'method', 'rombel_id'],
-            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', '1'],
+            ['Budi Santoso', '1234567890', '2015-05-01', 'digital', (string) $rombel->id],
         ]);
 
         $service = app(StudentImportService::class);

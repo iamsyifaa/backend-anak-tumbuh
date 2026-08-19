@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Imports\StudentsImport;
+use App\Models\AcademicYear;
 use App\Models\Enrollment;
 use App\Models\ImportBatch;
+use App\Models\Rombel;
 use App\Models\StudentProfile;
 use App\Models\User;
 use Carbon\Carbon;
@@ -25,7 +27,10 @@ class StudentImportService
         Excel::import($import, $file);
 
         $rows = $import->rows ?? collect();
-        $validated = $this->validateRows($rows);
+
+        $academicYear = AcademicYear::findOrFail($academicYearId);
+
+        $validated = $this->validateRows($rows, $academicYear->school_id);
 
         return ImportBatch::create([
             'token' => (string) Str::uuid(),
@@ -40,7 +45,12 @@ class StudentImportService
         ]);
     }
 
-    private function validateRows(Collection $rows): array
+    /**
+     * @param  int  $schoolId  Sekolah pemilik academic year yang dipakai untuk import ini.
+     *                         Dipakai untuk menolak rombel_id yang bukan milik sekolah ini
+     *                         (mencegah siswa Sekolah A ke-enroll ke rombel Sekolah B).
+     */
+    private function validateRows(Collection $rows, int $schoolId): array
     {
         $seenNisn = [];
         $results = [];
@@ -88,6 +98,18 @@ class StudentImportService
 
             if ($nisn !== '' && StudentProfile::where('nisn', $nisn)->exists()) {
                 $errors[] = "NISN '{$nisn}' sudah terdaftar di sistem.";
+            }
+
+            // Cegah kebocoran data lintas sekolah: rombel_id yang diisi di file
+            // HARUS milik sekolah yang sama dengan academic year tujuan import.
+            if ($rombelId !== null && $rombelId !== '') {
+                $rombelBelongsToSchool = Rombel::where('id', $rombelId)
+                    ->where('school_id', $schoolId)
+                    ->exists();
+
+                if (! $rombelBelongsToSchool) {
+                    $errors[] = "Rombel ID '{$rombelId}' tidak ditemukan atau bukan milik sekolah ini.";
+                }
             }
 
             $results[] = [

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\StudentProfile;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 /**
  * QR credential = plain-text Sanctum Personal Access Token itu sendiri.
@@ -44,21 +45,30 @@ class QrCredentialService
     /**
      * Generate untuk banyak siswa sekaligus. Return array
      * [student_profile_id => plainTextToken, ...]
+     *
+     * Dibungkus DB::transaction supaya atomic — kalau ada error di
+     * tengah proses (misal siswa ke-N gagal), SEMUA revoke+generate
+     * yang sudah terjadi di batch ini ikut di-rollback. Ini mencegah
+     * kondisi "campur aduk" di mana sebagian siswa sudah dapat QR baru
+     * dan sebagian lagi masih pakai QR lama padahal admin mengira
+     * seluruh batch berhasil.
      */
     public function generateBulk(iterable $profiles): array
     {
-        $result = [];
+        return DB::transaction(function () use ($profiles) {
+            $result = [];
 
-        foreach ($profiles as $profile) {
-            $result[$profile->id] = [
-                'student_profile_id' => $profile->id,
-                'full_name' => $profile->full_name,
-                'nisn' => $profile->nisn,
-                'token' => $this->generateForStudent($profile),
-            ];
-        }
+            foreach ($profiles as $profile) {
+                $result[$profile->id] = [
+                    'student_profile_id' => $profile->id,
+                    'full_name' => $profile->full_name,
+                    'nisn' => $profile->nisn,
+                    'token' => $this->generateForStudent($profile),
+                ];
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     public function revokeForStudent(StudentProfile $profile): void
