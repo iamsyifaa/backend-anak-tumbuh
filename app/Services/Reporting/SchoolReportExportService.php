@@ -25,13 +25,14 @@ class SchoolReportExportService
     {
         $data = $this->collectData($school, $days);
 
-        $disk = Storage::disk('local');
+        $diskName = config('filesystems.export_disk');
+        $disk = Storage::disk($diskName);
         $directory = "report-exports/school/{$school->id}";
         $filename = Str::uuid().'.'.$format;
         $relativePath = "{$directory}/{$filename}";
 
         if ($format === 'xlsx') {
-            Excel::store(new SchoolReportExport($data), $relativePath, 'local');
+            Excel::store(new SchoolReportExport($data), $relativePath, $diskName);
         } else { // pdf
             $pdf = Pdf::loadView('reports.school-summary-pdf', [
                 'school' => $school,

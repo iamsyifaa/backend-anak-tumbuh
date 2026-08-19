@@ -39,7 +39,7 @@ class CertificateGenerationService
         ]);
 
         $filename = 'certificates/'.Str::uuid().'.pdf';
-        Storage::disk('local')->put($filename, $pdf->output());
+        Storage::disk(config('filesystems.export_disk'))->put($filename, $pdf->output());
 
         return Certificate::create([
             'student_profile_id' => $studentAward->student_profile_id,

@@ -20,10 +20,11 @@ use Maatwebsite\Excel\Facades\Excel;
  * apapun sendiri, supaya angka di file export selalu sama persis
  * dengan yang ditampilkan di dashboard/API (satu sumber kebenaran).
  *
- * File disimpan di disk 'local' (PRIVATE) — konsisten dengan prinsip
- * SEC-011 di ReportExportController ("file tidak pernah di disk public").
- * Download TETAP lewat alur SEC-011 yang sudah ada (generateLink +
- * download route+policy) — service ini TIDAK bikin cara download baru.
+ * File disimpan di disk PRIVATE — lokal saat dev, Supabase Storage saat
+ * production (lihat config('filesystems.export_disk')) — konsisten dengan
+ * prinsip SEC-011 di ReportExportController ("file tidak pernah di disk
+ * public"). Download TETAP lewat alur SEC-011 yang sudah ada (generateLink
+ * + download route+policy) — service ini TIDAK bikin cara download baru.
  */
 class ReportExportService
 {
@@ -68,6 +69,7 @@ class ReportExportService
         );
 
         $path = "reports/{$scopeType}/{$filename}";
+        $disk = config('filesystems.export_disk');
 
         if ($format === 'pdf') {
             $pdf = Pdf::loadView('pdf.report-export', [
@@ -77,9 +79,9 @@ class ReportExportService
                 'rows' => $rows,
             ]);
 
-            Storage::disk('local')->put($path, $pdf->output());
+            Storage::disk($disk)->put($path, $pdf->output());
         } else {
-            Excel::store(new ReportArrayExport($rows, $headings), $path, 'local');
+            Excel::store(new ReportArrayExport($rows, $headings), $path, $disk);
         }
 
         return ReportExport::create([

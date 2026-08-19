@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\URL;
  * download yang SAMA di controller ini, bukan bikin endpoint download sendiri).
  *
  * Prinsip kunci "files protected":
- * 1. File TIDAK PERNAH disimpan di disk 'public' — selalu 'local' (private),
- *    supaya tidak ada URL publik yang bisa ditebak/diakses langsung.
+ * 1. File TIDAK PERNAH disimpan di disk 'public' — selalu disk private
+ *    (lokal saat dev, Supabase Storage saat production — lihat
+ *    config('filesystems.export_disk')), supaya tidak ada URL publik
+ *    yang bisa ditebak/diakses langsung.
  * 2. Link download HARUS signed URL (Laravel URL::temporarySignedRoute) —
  *    kadaluwarsa otomatis, dan signature gagal kalau parameter diutak-atik.
  * 3. Signed URL SENDIRI TIDAK CUKUP — tetap dicek Policy scope, supaya
@@ -56,8 +58,11 @@ class ReportExportController extends Controller
         $this->authorize('download', $reportExport);
 
         abort_if($reportExport->isExpired(), 410, 'Link unduhan sudah kedaluwarsa.');
-        abort_unless(Storage::disk('local')->exists($reportExport->file_path), 404, 'File tidak ditemukan.');
 
-        return Storage::disk('local')->download($reportExport->file_path);
+        $disk = Storage::disk(config('filesystems.export_disk'));
+
+        abort_unless($disk->exists($reportExport->file_path), 404, 'File tidak ditemukan.');
+
+        return $disk->download($reportExport->file_path);
     }
 }
