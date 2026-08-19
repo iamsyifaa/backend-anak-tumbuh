@@ -139,8 +139,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('report-exports/{reportExport}/link', [ReportExportController::class, 'generateLink']);
 
     // ── STUDENT IMPORT ───────────────────────────────────────────────────
-    Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
-    Route::post('/students/import/commit', [StudentImportController::class, 'commit']);
+    // [OPS-001] Import siswa cuma boleh Super Admin & Kepala Sekolah — Wali
+    // Kelas dan Siswa TIDAK BOLEH bikin akun siswa baru sembarangan lewat
+    // endpoint ini. StudentImportUploadRequest::authorize() masih return
+    // true (TODO lama, belum ganti ke Gate/Policy), jadi proteksi role
+    // WAJIB ditegakkan di level route ini sebagai defense-in-depth.
+    Route::middleware('role.not:wali_kelas,siswa')->group(function () {
+        Route::post('/students/import/preview', [StudentImportController::class, 'preview']);
+        Route::post('/students/import/commit', [StudentImportController::class, 'commit']);
+    });
 
     // ── STUDENT QR (MASTER-003) ──────────────────────────────────────────
     Route::post('/students/{studentProfile}/qr/generate', [StudentQrController::class, 'generate']);
