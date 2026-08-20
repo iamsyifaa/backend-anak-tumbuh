@@ -9,7 +9,7 @@ class IndicatorOption extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['indicator_id', 'label', 'value', 'point_value', 'sort_order', 'active'];
+    protected $fillable = ['indicator_id', 'label', 'value', 'point_value', 'exp_value', 'sort_order', 'active'];
 
     protected $casts = ['active' => 'boolean'];
 
