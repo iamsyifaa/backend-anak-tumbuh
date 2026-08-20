@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\LevelThreshold;
+use App\Policies\LevelThresholdPolicy;
 use App\Models\AcademicYear;
 use App\Models\ActivitySubmission;
 use App\Models\Award;
@@ -82,6 +84,8 @@ class AuthServiceProvider extends ServiceProvider
 
         // --- SEC-011: Policy Otorisasi Export Report ---
         ReportExport::class => ReportExportPolicy::class,
+
+        LevelThreshold::class => LevelThresholdPolicy::class,
     ];
 
     public function boot(): void
