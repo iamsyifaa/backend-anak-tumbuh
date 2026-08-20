@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // ANAKTUMBUH_QR_External_Scanner_Backend_Integration.docx — base URL
+    // deep-link Frontend, dipakai QrCredentialService untuk membungkus
+    // token QR jadi full URL yang bisa dibuka scanner eksternal (kamera
+    // HP/Google Lens), bukan raw token mentah.
+    'frontend' => [
+        'qr_login_url' => env('QR_LOGIN_BASE_URL', 'http://localhost:5173/auth/qr'),
+    ],
+
 ];
