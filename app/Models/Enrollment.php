@@ -49,6 +49,11 @@ class Enrollment extends Model
         return $this->belongsTo(AcademicYear::class);
     }
 
+    public function rombel(): BelongsTo
+    {
+        return $this->belongsTo(Rombel::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
