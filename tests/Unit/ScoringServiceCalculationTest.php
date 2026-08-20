@@ -24,7 +24,7 @@ class ScoringServiceCalculationTest extends TestCase
         return Habit::create(['code' => 'habit_'.uniqid(), 'name' => 'Kebiasaan Test']);
     }
 
-    private function makeIndicator(int $habitId, string $code, string $optionValue, int $pointValue): array
+    private function makeIndicator(int $habitId, string $code, string $optionValue, int $pointValue, ?int $expValue = null): array
     {
         $indicator = HabitIndicator::create([
             'habit_id' => $habitId,
@@ -40,6 +40,7 @@ class ScoringServiceCalculationTest extends TestCase
             'label' => 'Opsi Test',
             'value' => $optionValue,
             'point_value' => $pointValue,
+            'exp_value' => $expValue ?? $pointValue,
             'sort_order' => 1,
             'active' => true,
         ]);
@@ -161,5 +162,24 @@ class ScoringServiceCalculationTest extends TestCase
 
         $this->assertSame('submission_answer', $pointTx->source_type);
         $this->assertSame($answer->id, $pointTx->source_id);
+    }
+
+    public function test_points_and_exp_can_differ_for_same_option(): void
+    {
+        [$user, , $submission] = $this->makeSubmission();
+        $habit = $this->makeHabit();
+        // Poin 10, EXP sengaja beda: 3
+        [$indicator, $option] = $this->makeIndicator($habit->id, 'menyapu', 'sudah', 10, 3);
+
+        SubmissionAnswer::create([
+            'activity_submission_id' => $submission->id,
+            'indicator_id' => $indicator->id,
+            'indicator_option_id' => $option->id,
+        ]);
+
+        app(ScoringService::class)->scoreSubmission($submission->fresh());
+
+        $this->assertSame(10, PointTransaction::where('user_id', $user->id)->sum('amount'));
+        $this->assertSame(3, ExpTransaction::where('user_id', $user->id)->sum('amount'));
     }
 }
