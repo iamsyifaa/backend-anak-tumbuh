@@ -10,6 +10,7 @@ use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\HabitConfigController;
 use App\Http\Controllers\HabitController;
+use App\Http\Controllers\LevelThresholdController;
 use App\Http\Controllers\PointConfigController;
 use App\Http\Controllers\PointController;
 use App\Http\Controllers\PrincipalDashboardController;
@@ -194,6 +195,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/certificate-templates', [CertificateTemplateController::class, 'store']);
     Route::put('/certificate-templates/{certificateTemplate}', [CertificateTemplateController::class, 'update']);
     Route::delete('/certificate-templates/{certificateTemplate}', [CertificateTemplateController::class, 'destroy']);
+
+    // ── Level Threshold Configuration (Super Admin only) ──────────────
+    Route::middleware('role.not:kepala_sekolah,wali_kelas,siswa')->group(function () {
+        Route::get('/level-thresholds', [LevelThresholdController::class, 'index']);
+        Route::post('/level-thresholds', [LevelThresholdController::class, 'store']);
+        Route::put('/level-thresholds/{levelThreshold}', [LevelThresholdController::class, 'update']);
+        Route::delete('/level-thresholds/{levelThreshold}', [LevelThresholdController::class, 'destroy']);
+    });
 });
 
 // Route download TERPISAH dari grup auth:sanctum di atas — signed URL
