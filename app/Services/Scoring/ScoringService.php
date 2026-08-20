@@ -54,13 +54,13 @@ class ScoringService
 
             foreach ($habitAnswers as $answer) {
                 $basePoints = $answer->option->point_value;
+                $baseExp = $answer->option->exp_value;
 
                 $this->pointService->record(
                     $userId, $basePoints, 'submission_answer', $answer->id, $periodDate
                 );
-
                 $this->expService->record(
-                    $userId, $basePoints, 'submission_answer', $answer->id, $periodDate
+                    $userId, $baseExp, 'submission_answer', $answer->id, $periodDate
                 );
             }
 
