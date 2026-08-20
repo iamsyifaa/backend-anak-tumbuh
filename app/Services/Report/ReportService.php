@@ -3,11 +3,13 @@
 namespace App\Services\Report;
 
 use App\Models\ActivitySubmission;
+use App\Models\Enrollment;
 use App\Models\ExpTransaction;
 use App\Models\PointTransaction;
 use App\Models\StudentAward;
 use App\Models\StudentBadge;
 use App\Models\StudentProfile;
+use App\Models\SubmissionAnswer;
 use App\Services\Analytics\SchoolAnalyticsService;
 use App\Services\Business\LevelService;
 use Carbon\Carbon;
@@ -116,6 +118,171 @@ class ReportService
             'period' => ['start' => $startDate->toDateString(), 'end' => $endDate->toDateString()],
             'student_count' => $rows->count(),
             'students' => $rows->values()->toArray(),
+        ];
+    }
+
+    /**
+     * Report Filter Kebiasaan & Inisiatif — Wali Kelas / Kepala Sekolah.
+     * Base data = SELURUH siswa aktif di scope (bukan dari submission),
+     * supaya siswa yang belum mengisi tetap muncul dengan status
+     * "Belum mengisi" dan metode (Digital/Manual) dari master data.
+     *
+     * @param  string[]  $initiatives  ['sadar_sendiri', 'disuruh'] atau [] = semua
+     */
+    public function getHabitInitiativeReport(
+        int $habitId,
+        array $initiatives,
+        ?int $rombelId,
+        ?int $schoolId,
+        Carbon $startDate,
+        Carbon $endDate,
+    ): array {
+        $startStr = $startDate->toDateString();
+        $endStr = $endDate->toDateString();
+
+        // 1. Base: seluruh StudentProfile aktif di scope (rombel atau sekolah).
+        $students = StudentProfile::query()
+            ->where('status', StudentProfile::STATUS_ACTIVE)
+            ->whereHas('currentEnrollment', function ($q) use ($rombelId, $schoolId) {
+                if ($rombelId) {
+                    $q->where('rombel_id', $rombelId);
+                } elseif ($schoolId) {
+                    $q->whereHas('rombel', fn ($r) => $r->where('school_id', $schoolId));
+                }
+            })
+            ->with(['currentEnrollment.rombel.school'])
+            ->get();
+
+        if ($students->isEmpty()) {
+            return [
+                'meta' => ['total_siswa' => 0, 'digital_count' => 0, 'manual_count' => 0, 'active_days' => 0],
+                'data' => [],
+            ];
+        }
+
+        $studentProfileIds = $students->pluck('id');
+
+        // 2. active_days = jumlah hari unik ada submission locked dalam scope+range.
+        $activeDays = ActivitySubmission::whereIn('student_profile_id', $studentProfileIds)
+            ->where('status', 'locked')
+            ->whereBetween('activity_date', [$startStr, $endStr])
+            ->distinct('activity_date')
+            ->count('activity_date');
+
+        // 3. Jawaban untuk habit ini, dari submission locked dalam range & scope.
+        $answers = SubmissionAnswer::query()
+            ->join('activity_submissions', 'activity_submissions.id', '=', 'submission_answers.activity_submission_id')
+            ->join('habit_indicators', 'habit_indicators.id', '=', 'submission_answers.indicator_id')
+            ->where('habit_indicators.habit_id', $habitId)
+            ->where('activity_submissions.status', 'locked')
+            ->whereIn('activity_submissions.student_profile_id', $studentProfileIds)
+            ->whereBetween('activity_submissions.activity_date', [$startStr, $endStr])
+            ->select('submission_answers.*')
+            ->with(['indicator', 'option', 'activitySubmission'])
+            ->get()
+            ->groupBy(fn (SubmissionAnswer $a) =>
+                $a->activitySubmission->student_profile_id.'|'.$a->activitySubmission->activity_date->toDateString()
+            );
+
+        // 4. Per (siswa, tanggal): tentukan inisiatif + deskripsi, buang yang tidak lolos filter inisiatif.
+        $perStudentDays = collect();
+
+        foreach ($answers as $key => $dayAnswers) {
+            [$studentProfileId, $date] = explode('|', $key);
+
+            $initiativeAnswer = $dayAnswers->first(fn ($a) => $a->indicator->code === 'inisiatif');
+            $initiativeValue = $initiativeAnswer?->option->value;
+
+            if (! empty($initiatives) && ! in_array($initiativeValue, $initiatives, true)) {
+                continue;
+            }
+
+            $mainAnswer = $dayAnswers->first(fn ($a) => $a->indicator->code !== 'inisiatif');
+
+            $perStudentDays->push([
+                'student_profile_id' => (int) $studentProfileId,
+                'date' => $date,
+                'description' => $mainAnswer?->option->label ?? $initiativeAnswer?->option->label,
+                'initiative_label' => $initiativeAnswer
+                    ? ($initiativeValue === 'sadar_sendiri' ? 'Sadar sendiri' : 'Disuruh')
+                    : null,
+                'answer_ids' => $dayAnswers->pluck('id'),
+                'initiative_answer_id' => $initiativeAnswer?->id,
+            ]);
+        }
+
+        $matchedByStudent = $perStudentDays->groupBy('student_profile_id');
+
+        // 5. Poin & EXP dari ledger — hanya untuk answer_id yang match filter.
+        $allAnswerIds = $perStudentDays->flatMap(fn ($d) => $d['answer_ids'])->unique();
+        $allBonusIds = $perStudentDays->pluck('initiative_answer_id')->filter()->unique();
+
+        $pointsByAnswer = PointTransaction::where('source_type', 'submission_answer')
+            ->whereIn('source_id', $allAnswerIds)->pluck('amount', 'source_id');
+
+        $bonusByAnswer = PointTransaction::where('source_type', 'initiative_bonus')
+            ->whereIn('source_id', $allBonusIds)->pluck('amount', 'source_id');
+
+        $expByAnswer = ExpTransaction::where('source_type', 'submission_answer')
+            ->whereIn('source_id', $allAnswerIds)->pluck('amount', 'source_id');
+
+        // 6. Susun output: base = SEMUA siswa, left-merge hasil di atas.
+        $data = $students->map(function (StudentProfile $sp) use (
+            $matchedByStudent, $pointsByAnswer, $bonusByAnswer, $expByAnswer, $activeDays
+        ) {
+            $rombel = $sp->currentEnrollment->first()?->rombel;
+            $rombelLabel = $rombel ? "{$rombel->name} • {$rombel->school->name}" : null;
+
+            $days = $matchedByStudent->get($sp->id);
+
+            if (blank($days)) {
+                return [
+                    'student_id' => $sp->id,
+                    'nama' => $sp->full_name,
+                    'rombel' => $rombelLabel,
+                    'metode' => strtoupper($sp->method),
+                    'persentase' => null,
+                    'deskripsi' => 'Belum mengisi',
+                    'inisiatif' => '-',
+                    'poin' => '-',
+                    'exp' => '-',
+                ];
+            }
+
+            [$totalPoin, $totalExp] = [0, 0];
+            foreach ($days as $day) {
+                foreach ($day['answer_ids'] as $answerId) {
+                    $totalPoin += $pointsByAnswer[$answerId] ?? 0;
+                    $totalExp += $expByAnswer[$answerId] ?? 0;
+                }
+                if ($day['initiative_answer_id']) {
+                    $totalPoin += $bonusByAnswer[$day['initiative_answer_id']] ?? 0;
+                }
+            }
+
+            $latest = $days->sortByDesc('date')->first();
+
+            return [
+                'student_id' => $sp->id,
+                'nama' => $sp->full_name,
+                'rombel' => $rombelLabel,
+                'metode' => strtoupper($sp->method),
+                'persentase' => $activeDays > 0 ? (int) round(($days->count() / $activeDays) * 100) : null,
+                'deskripsi' => $latest['description'] ?? '-',
+                'inisiatif' => $latest['initiative_label'] ?? '-',
+                'poin' => $totalPoin,
+                'exp' => $totalExp,
+            ];
+        });
+
+        return [
+            'meta' => [
+                'total_siswa' => $students->count(),
+                'digital_count' => $students->where('method', StudentProfile::METHOD_DIGITAL)->count(),
+                'manual_count' => $students->where('method', StudentProfile::METHOD_MANUAL)->count(),
+                'active_days' => $activeDays,
+            ],
+            'data' => $data->values()->all(),
         ];
     }
 

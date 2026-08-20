@@ -98,6 +98,10 @@ class HabitController extends Controller
             'options.*.label' => 'required|string',
             'options.*.value' => 'required|string',
             'options.*.point_value' => 'required|integer',
+            // FIX: Poin & EXP dipisah jadi dua sistem independen
+            // (Bagian 9 & 30) — exp_value wajib diisi terpisah dari
+            // point_value, tidak lagi otomatis ikut nilai yang sama.
+            'options.*.exp_value' => 'required|integer',
         ]);
 
         $indicator = DB::transaction(function () use ($habit, $validated) {
@@ -113,6 +117,7 @@ class HabitController extends Controller
                     'label' => $opt['label'],
                     'value' => $opt['value'],
                     'point_value' => $opt['point_value'],
+                    'exp_value' => $opt['exp_value'],
                     'sort_order' => $idx + 1,
                 ]);
             }
@@ -169,6 +174,10 @@ class HabitController extends Controller
             'label' => 'sometimes|required|string',
             'value' => 'sometimes|required|string',
             'point_value' => 'sometimes|required|integer',
+            // FIX: Poin & EXP dipisah jadi dua sistem independen
+            // (Bagian 9 & 30) — exp_value bisa diupdate terpisah dari
+            // point_value.
+            'exp_value' => 'sometimes|required|integer',
             'sort_order' => 'nullable|integer',
             'active' => 'nullable|boolean',
         ]);

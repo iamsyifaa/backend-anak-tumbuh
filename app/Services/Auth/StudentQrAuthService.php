@@ -12,18 +12,27 @@ class StudentQrAuthService
     private const ABILITY = 'qr-login';
 
     /**
-     * Validasi token mentah hasil scan QR, pastikan milik siswa Digital
-     * yang aktif, lalu kembalikan data untuk sesi login.
+     * Validasi input hasil scan QR — bisa berupa RAW TOKEN mentah
+     * ATAU FULL URL deep-link Frontend (format baru,
+     * ANAKTUMBUH_QR_External_Scanner_Backend_Integration.docx).
+     * Kalau formatnya URL, token di-extract dari query param 'token'
+     * dulu sebelum divalidasi seperti biasa — supaya tetap backward
+     * compatible kalau ada pemanggil lain yang masih kirim raw token.
+     *
+     * Pastikan milik siswa Digital yang aktif, lalu kembalikan data
+     * untuk sesi login.
      *
      * @throws AuthenticationException kalau token kosong/salah/revoked/
      *                                 bukan token qr-login/siswa bukan
      *                                 Digital/siswa tidak aktif
      */
-    public function loginWithQr(?string $rawToken): array
+    public function loginWithQr(?string $rawInput): array
     {
-        if (blank($rawToken)) {
+        if (blank($rawInput)) {
             throw new AuthenticationException('QR token tidak boleh kosong.');
         }
+
+        $rawToken = $this->extractToken($rawInput);
 
         $token = PersonalAccessToken::findToken($rawToken);
 
@@ -82,6 +91,23 @@ class StudentQrAuthService
             'student_profile' => $profile,
             'token' => $rawToken, // token QR yang sama dipakai lanjut sebagai bearer token
         ];
+    }
+
+    /**
+     * Deteksi apakah input berupa full URL deep-link (format baru) atau
+     * raw token mentah (format lama). Kalau URL, extract query param
+     * 'token'. Kalau bukan URL sama sekali, anggap sudah raw token —
+     * dikembalikan apa adanya (backward-compatible).
+     */
+    private function extractToken(string $rawInput): string
+    {
+        if (! filter_var($rawInput, FILTER_VALIDATE_URL)) {
+            return $rawInput;
+        }
+
+        parse_str((string) parse_url($rawInput, PHP_URL_QUERY), $params);
+
+        return $params['token'] ?? $rawInput;
     }
 
     /**

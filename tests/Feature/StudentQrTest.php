@@ -31,8 +31,18 @@ class StudentQrTest extends TestCase
         $this->assertNotEmpty($token);
         $this->assertTrue($service->hasActiveQr($profile));
 
-        // Token harus bisa dipakai untuk auth beneran (format Sanctum "id|random")
-        $this->assertStringContainsString('|', $token);
+        // FIX (ANAKTUMBUH_QR_External_Scanner_Backend_Integration.docx):
+        // QR sekarang berisi FULL URL deep-link Frontend
+        // (.../auth/qr?token=<raw-token>), bukan raw Sanctum token
+        // mentah lagi. Raw token-nya sendiri tetap format "id|random",
+        // cuma karakter '|' di-encode jadi '%7C' begitu dibungkus ke
+        // query string URL — makanya dicek via query param, bukan cek
+        // '|' langsung di string token secara keseluruhan.
+        $this->assertStringStartsWith(config('services.frontend.qr_login_url').'?token=', $token);
+
+        parse_str((string) parse_url($token, PHP_URL_QUERY), $params);
+        $this->assertArrayHasKey('token', $params);
+        $this->assertStringContainsString('|', $params['token']);
     }
 
     public function test_generating_new_qr_revokes_old_one(): void
