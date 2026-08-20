@@ -2,34 +2,31 @@
 
 namespace App\Services\Business;
 
+use App\Models\LevelThreshold;
+use Illuminate\Support\Facades\Cache;
+
 class LevelService
 {
+    private const CACHE_KEY = 'level_thresholds';
+
     /**
-     * PLACEHOLDER — angka ini BUKAN final. Requirement eksplisit bilang:
-     * "Angka final kebutuhan EXP ditentukan saat balancing/configuration."
-     * Kurva di bawah cuma contoh masuk akal (tiap level makin sulit),
-     * supaya dashboard bisa jalan sekarang. WAJIB direview tim sebelum rilis.
-     *
-     * Index array = level, value = kumulatif EXP minimum untuk level itu.
+     * Ambil semua threshold level dari database, urut dari level terkecil.
+     * Di-cache karena data ini jarang berubah tapi sering dibaca
+     * (setiap submission/scoring memanggil calculateLevel).
      */
-    private const LEVEL_THRESHOLDS = [
-        1 => 0,
-        2 => 100,
-        3 => 250,
-        4 => 450,
-        5 => 700,
-        6 => 1000,
-        7 => 1350,
-        8 => 1750,
-        9 => 2200,
-        10 => 2700,
-    ];
+    private function thresholds(): array
+    {
+        return Cache::remember(self::CACHE_KEY, 3600, function () {
+            return LevelThreshold::orderBy('level')
+                ->pluck('required_exp', 'level')
+                ->all();
+        });
+    }
 
     public function calculateLevel(int $totalExp): int
     {
         $level = 1;
-
-        foreach (self::LEVEL_THRESHOLDS as $lvl => $requiredExp) {
+        foreach ($this->thresholds() as $lvl => $requiredExp) {
             if ($totalExp >= $requiredExp) {
                 $level = $lvl;
             }
@@ -40,13 +37,14 @@ class LevelService
 
     public function expToNextLevel(int $totalExp): ?int
     {
+        $thresholds = $this->thresholds();
         $currentLevel = $this->calculateLevel($totalExp);
         $nextLevel = $currentLevel + 1;
 
-        if (! isset(self::LEVEL_THRESHOLDS[$nextLevel])) {
+        if (! isset($thresholds[$nextLevel])) {
             return null; // sudah level maksimum
         }
 
-        return self::LEVEL_THRESHOLDS[$nextLevel] - $totalExp;
+        return $thresholds[$nextLevel] - $totalExp;
     }
 }

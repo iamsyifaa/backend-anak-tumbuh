@@ -3,10 +3,21 @@
 namespace Tests\Unit;
 
 use App\Services\Business\LevelService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class LevelServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Cache::flush();
+    }
+
     public function test_zero_exp_is_level_one(): void
     {
         $this->assertSame(1, app(LevelService::class)->calculateLevel(0));
