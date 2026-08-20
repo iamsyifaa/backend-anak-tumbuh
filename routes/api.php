@@ -14,6 +14,7 @@ use App\Http\Controllers\LevelThresholdController;
 use App\Http\Controllers\PointConfigController;
 use App\Http\Controllers\PointController;
 use App\Http\Controllers\PrincipalDashboardController;
+use App\Http\Controllers\Report\HabitInitiativeReportController;
 use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\ReportGenerateController;
 use App\Http\Controllers\RombelController;
@@ -139,6 +140,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('report-exports', [ReportGenerateController::class, 'store']);
     Route::post('report-exports/{reportExport}/link', [ReportExportController::class, 'generateLink']);
 
+    // ── BE-012 (Report Filter Kebiasaan & Inisiatif) ───────────────
+    Route::middleware('read-only')->get('reports/habit-initiative', HabitInitiativeReportController::class);
     // ── STUDENT IMPORT ───────────────────────────────────────────────────
     // [OPS-001] Import siswa cuma boleh Super Admin & Kepala Sekolah — Wali
     // Kelas dan Siswa TIDAK BOLEH bikin akun siswa baru sembarangan lewat
