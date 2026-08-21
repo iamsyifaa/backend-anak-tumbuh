@@ -135,12 +135,16 @@ class StudentDashboardController extends Controller
             );
         }
 
-        if ($cohortEnabled) {
-            $result['cohort_rank'] = $this->buildRankResult(
-                $profile,
-                $this->rankingService->getRankingsForSchool($schoolId, now())
-            );
-        }
+            if ($cohortEnabled) {
+                $educationLevelId = $enrollment->rombel?->education_level_id;
+
+                $result['cohort_rank'] = $educationLevelId
+                    ? $this->buildRankResult(
+                        $profile,
+                        $this->rankingService->getRankingsForGrade($educationLevelId, now())
+                    )
+                    : null;
+            }
 
         return $this->success($result);
     }
