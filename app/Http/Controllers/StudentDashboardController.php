@@ -150,7 +150,7 @@ class StudentDashboardController extends Controller
         if ($cohortEnabled) {
             $result['cohort_rank'] = $this->buildRankResult(
                 $profile,
-                $this->rankingService->getRankingsForSchool($schoolId)
+                $this->rankingService->getRankingsForSchool($schoolId, now())
             );
         }
 

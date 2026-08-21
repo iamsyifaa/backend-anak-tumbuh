@@ -5,6 +5,9 @@ namespace App\Services\Business;
 use App\Models\PointTransaction;
 use App\Models\SchoolFeatureSetting;
 use App\Models\StudentProfile;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class RankingService
@@ -55,7 +58,7 @@ class RankingService
             return null;
         }
 
-        $rankings = $this->getRankingsForSchool($schoolId);
+        $rankings = $this->getRankingsForSchool($schoolId, now());
 
         $position = $rankings->search(fn ($row) => $row['user_id'] === $studentProfile->user_id);
 
@@ -83,24 +86,29 @@ class RankingService
         return $position === false ? null : $position + 1;
     }
 
-    /**
+        /**
      * Ranking se-sekolah (angkatan). Beri $month untuk membatasi transaksi
-     * poin ke bulan tertentu (belum dipakai di langkah ini — masih
-     * kumulatif kalau $month null, sesuai perilaku lama, supaya test lama
-     * tidak patah). Filter bulan akan diaktifkan di langkah berikutnya
-     * begitu kolom grade_level dari Anggota B siap.
+     * poin ke bulan tertentu (sesuai Requirement Bagian 14: "Ranking
+     * angkatan dihitung per bulan"). Kalau $month null, kumulatif —
+     * dipertahankan untuk pemanggil yang belum diupdate.
+     *
+     * Scope saat ini masih SE-SEKOLAH (bukan per tingkat pendidikan) —
+     * tim sudah sepakat "angkatan" seharusnya per tingkat, tapi itu
+     * menunggu kolom education_level_id (Anggota A) yang mereferensi
+     * tabel education_levels (Anggota B). Begitu itu siap, method ini
+     * akan diganti scope-nya, filter bulan di bawah tidak berubah.
      *
      * @return Collection<int, array{user_id: int, total_points: int}>
      *                                                                 Terurut dari poin tertinggi ke terendah.
      */
-    public function getRankingsForSchool(int $schoolId): Collection
+    public function getRankingsForSchool(int $schoolId, ?Carbon $month = null): Collection
     {
         $userIds = StudentProfile::whereHas(
             'currentEnrollment.academicYear',
             fn ($q) => $q->where('school_id', $schoolId)
         )->pluck('user_id');
 
-        return $this->rankByPoints($userIds);
+        return $this->rankByPoints($userIds, $month);
     }
 
     /**
@@ -124,13 +132,27 @@ class RankingService
      * @param  Collection<int, int>  $userIds
      * @return Collection<int, array{user_id: int, total_points: int}>
      */
-    private function rankByPoints(Collection $userIds): Collection
+    private function rankByPoints(Collection $userIds, ?Carbon $month = null): Collection
     {
-        return PointTransaction::whereIn('user_id', $userIds)
-            ->selectRaw('user_id, SUM(amount) as total_points')
-            ->groupBy('user_id')
+        $pointsSub = PointTransaction::query()
+            ->select('user_id', DB::raw('SUM(amount) as total_points'))
+            ->whereIn('user_id', $userIds);
+
+        if ($month) {
+            $pointsSub->whereBetween('period_date', [
+                $month->copy()->startOfMonth(),
+                $month->copy()->endOfMonth(),
+            ]);
+        }
+
+        $pointsSub->groupBy('user_id');
+
+        return User::query()
+            ->select('users.id as user_id')
+            ->whereIn('users.id', $userIds)
+            ->leftJoinSub($pointsSub, 'points', 'points.user_id', '=', 'users.id')
+            ->selectRaw('COALESCE(points.total_points, 0) as total_points')
             ->orderByDesc('total_points')
-            ->get()
-            ->map(fn ($row) => ['user_id' => $row->user_id, 'total_points' => (int) $row->total_points]);
+            ->get();
     }
 }
