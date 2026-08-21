@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\EducationLevel;
 use App\Models\LevelThreshold;
+use App\Policies\EducationLevelPolicy;
 use App\Policies\LevelThresholdPolicy;
 use App\Models\AcademicYear;
 use App\Models\ActivitySubmission;
@@ -86,6 +88,12 @@ class AuthServiceProvider extends ServiceProvider
         ReportExport::class => ReportExportPolicy::class,
 
         LevelThreshold::class => LevelThresholdPolicy::class,
+
+        // --- EDUCATION LEVEL (Jenjang Pendidikan) ---
+        // TODO: belum ada di dokumen resmi 01_Role_Permission_v2_0, Policy
+        // masih sementara cek role langsung. Lihat catatan di
+        // EducationLevelPolicy.
+        EducationLevel::class => EducationLevelPolicy::class,
     ];
 
     public function boot(): void

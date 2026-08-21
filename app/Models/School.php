@@ -49,4 +49,9 @@ class School extends Model
     {
         return $this->hasOne(SchoolFeatureSetting::class);
     }
+
+    public function educationLevels()
+{
+    return $this->hasMany(EducationLevel::class);
+}
 }
