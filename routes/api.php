@@ -118,8 +118,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('student/me/certificates', [StudentDashboardController::class, 'certificates']);
     Route::get('student/me/ranking', [StudentDashboardController::class, 'ranking']);
 
-    // ── SEC-009 ──────────────────────────────────────────────────────────
+    // ── SEC-009 (Rombel CRUD & Actions) ──────────────────────────────────
+    Route::get('rombels', [RombelController::class, 'index']);
+    Route::post('rombels', [RombelController::class, 'store']);
     Route::get('rombels/{rombel}', [RombelController::class, 'show']);
+    Route::put('rombels/{rombel}', [RombelController::class, 'update']);
+    Route::delete('rombels/{rombel}', [RombelController::class, 'destroy']);
     Route::post('rombels/{rombel}/assign-teacher', [RombelController::class, 'assignTeacher']);
 
     // ── MASTER-009 (Teacher API — monitoring rombel, READ ONLY) ───────────
