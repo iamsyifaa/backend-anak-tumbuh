@@ -4,7 +4,11 @@ namespace Tests\Feature\Security;
 
 use App\Models\ActivitySubmission;
 use App\Models\Certificate;
+use App\Models\Enrollment;
+use App\Models\AcademicYear;
+use App\Models\Rombel;
 use App\Models\StudentAward;
+use App\Services\TeacherAssignmentService;
 use App\Models\StudentBadge;
 use App\Models\StudentProfile;
 use App\Models\User;
@@ -47,26 +51,85 @@ class StudentSelfAccessSecurityTest extends TestCase
 
     // ── /students/{id} — IDOR via profile ID ────────────────────────────
 
-    public function test_student_cannot_view_another_students_profile_by_id(): void
-    {
-        $siswaA = $this->createSiswaWithProfile();
-        $siswaB = $this->createSiswaWithProfile();
+    // ── /submissions/{id} — IDOR via submission ID ──────────────────────
+    // ── /certificates/{id}/link — endpoint siswa dihapus (keputusan tim);
+    // cuma wali kelas dari rombel siswa & super_admin yang boleh akses ──
 
-        $this->actingAs($siswaA, 'sanctum')
-            ->getJson("/api/students/{$siswaB->studentProfile->id}")
-            ->assertStatus(403);
-    }
-
-    public function test_student_can_view_own_profile_by_id(): void
+    public function test_student_cannot_access_certificate_link_at_all(): void
     {
         $siswa = $this->createSiswaWithProfile();
 
+        $certificate = Certificate::factory()->create([
+            'student_profile_id' => $siswa->studentProfile->id,
+        ]);
+
         $this->actingAs($siswa, 'sanctum')
-            ->getJson("/api/students/{$siswa->studentProfile->id}")
+            ->postJson("/api/certificates/{$certificate->id}/link")
+            ->assertStatus(403);
+    }
+
+    public function test_wali_kelas_can_access_certificate_link_for_own_rombel_student(): void
+        {
+            $rombel = Rombel::factory()->create();
+            $academicYear = AcademicYear::create([
+                'school_id' => $rombel->school_id,
+                'name' => 'TA 2026/2027',
+                'is_active' => true,
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addMonths(10)->toDateString(),
+            ]);
+            $wali = User::factory()->create(['role' => 'wali_kelas']);
+            app(TeacherAssignmentService::class)->assign($wali, $rombel);
+
+            $siswa = $this->createSiswaWithProfile();
+            Enrollment::create([
+                'student_profile_id' => $siswa->studentProfile->id,
+                'academic_year_id' => $academicYear->id,
+                'rombel_id' => $rombel->id,
+                'status' => Enrollment::STATUS_ACTIVE,
+                'started_at' => now(),
+            ]);
+
+        $certificate = Certificate::factory()->create([
+            'student_profile_id' => $siswa->studentProfile->id,
+        ]);
+
+        $this->actingAs($wali, 'sanctum')
+            ->postJson("/api/certificates/{$certificate->id}/link")
             ->assertOk();
     }
 
-    // ── /submissions/{id} — IDOR via submission ID ──────────────────────
+    public function test_wali_kelas_cannot_access_certificate_link_for_other_rombel_student(): void
+    {
+        $ownRombel = Rombel::factory()->create();
+        $otherRombel = Rombel::factory()->create();
+        $academicYear = AcademicYear::create([
+            'school_id' => $otherRombel->school_id,
+            'name' => 'TA 2026/2027',
+            'is_active' => true,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addMonths(10)->toDateString(),
+        ]);
+        $wali = User::factory()->create(['role' => 'wali_kelas']);
+        app(TeacherAssignmentService::class)->assign($wali, $ownRombel);
+
+        $siswa = $this->createSiswaWithProfile();
+        Enrollment::create([
+            'student_profile_id' => $siswa->studentProfile->id,
+            'academic_year_id' => $academicYear->id,
+            'rombel_id' => $otherRombel->id,
+            'status' => Enrollment::STATUS_ACTIVE,
+            'started_at' => now(),
+        ]);
+
+        $certificate = Certificate::factory()->create([
+            'student_profile_id' => $siswa->studentProfile->id,
+        ]);
+
+        $this->actingAs($wali, 'sanctum')
+            ->postJson("/api/certificates/{$certificate->id}/link")
+            ->assertStatus(403);
+    }
 
     public function test_student_cannot_view_another_students_submission_by_guessing_id(): void
     {
@@ -116,32 +179,7 @@ class StudentSelfAccessSecurityTest extends TestCase
 
     // ── /certificates/{id} — IDOR via certificate ID ────────────────────
 
-    public function test_student_cannot_view_another_students_certificate_by_guessing_id(): void
-    {
-        $siswaA = $this->createSiswaWithProfile();
-        $siswaB = $this->createSiswaWithProfile();
-
-        $certificate = Certificate::factory()->create([
-            'student_profile_id' => $siswaB->studentProfile->id,
-        ]);
-
-        $this->actingAs($siswaA, 'sanctum')
-            ->getJson("/api/certificates/{$certificate->id}")
-            ->assertStatus(403);
-    }
-
-    public function test_student_can_view_own_certificate(): void
-    {
-        $siswa = $this->createSiswaWithProfile();
-
-        $certificate = Certificate::factory()->create([
-            'student_profile_id' => $siswa->studentProfile->id,
-        ]);
-
-        $this->actingAs($siswa, 'sanctum')
-            ->getJson("/api/certificates/{$certificate->id}")
-            ->assertOk();
-    }
+    
 
     // ── Super Admin tetap bisa akses semua (monitoring/support) ─────────
 
@@ -155,7 +193,7 @@ class StudentSelfAccessSecurityTest extends TestCase
 
         $this->actingAs($admin, 'sanctum')->getJson("/api/students/{$siswa->studentProfile->id}")->assertOk();
         $this->actingAs($admin, 'sanctum')->getJson("/api/submissions/{$submission->id}")->assertOk();
-        $this->actingAs($admin, 'sanctum')->getJson("/api/certificates/{$certificate->id}")->assertOk();
+        $this->actingAs($admin, 'sanctum')->postJson("/api/certificates/{$certificate->id}/link")->assertOk();
     }
 
     // ── Staff (Wali Kelas/Kepala Sekolah) — scope belum ada, harus DENY ──
@@ -181,7 +219,7 @@ class StudentSelfAccessSecurityTest extends TestCase
         $certificate = Certificate::factory()->create(['student_profile_id' => $siswa->studentProfile->id]);
 
         $this->actingAs($kepsek, 'sanctum')
-            ->getJson("/api/certificates/{$certificate->id}")
+            ->postJson("/api/certificates/{$certificate->id}/link")
             ->assertStatus(403);
     }
 

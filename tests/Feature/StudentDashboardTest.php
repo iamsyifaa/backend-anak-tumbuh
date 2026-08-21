@@ -6,7 +6,6 @@ use App\Models\AcademicYear;
 use App\Models\ActivitySubmission;
 use App\Models\Award;
 use App\Models\Badge;
-use App\Models\Certificate;
 use App\Models\Enrollment;
 use App\Models\PointTransaction;
 use App\Models\School;
@@ -94,19 +93,7 @@ class StudentDashboardTest extends TestCase
 
     // ── Certificates ─────────────────────────────────────────────
 
-    public function test_certificates_list_returns_own_certificates(): void
-    {
-        $profile = $this->makeStudentWithEnrollment();
-        $award = Award::create(['code' => 'Z', 'name' => 'Z']);
-
-        Certificate::create([
-            'student_profile_id' => $profile->id, 'award_id' => $award->id, 'issued_at' => now(),
-        ]);
-
-        $response = $this->actingAs($profile->user, 'sanctum')->getJson('/api/student/me/certificates');
-
-        $response->assertOk();
-    }
+    
 
     // ── Ranking respects feature flag ───────────────────────────
 

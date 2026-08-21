@@ -17,6 +17,7 @@ use App\Http\Controllers\PointController;
 use App\Http\Controllers\PrincipalDashboardController;
 use App\Http\Controllers\Report\HabitInitiativeReportController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\CertificateDownloadController;
 use App\Http\Controllers\ReportGenerateController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SchoolController;
@@ -109,13 +110,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── SEC-008 ──────────────────────────────────────────────────────────
     Route::get('student/me', [StudentSelfController::class, 'me']);
-    Route::get('certificates/{certificate}', [StudentSelfController::class, 'showCertificate']);
     Route::get('students/{studentProfile}', [StudentSelfController::class, 'showProfile']);
 
     // ── MASTER-008 (Student API — dashboard read endpoints) ───────────────
     Route::get('student/me/history', [StudentDashboardController::class, 'history']);
     Route::get('student/me/achievements', [StudentDashboardController::class, 'achievements']);
-    Route::get('student/me/certificates', [StudentDashboardController::class, 'certificates']);
     Route::get('student/me/ranking', [StudentDashboardController::class, 'ranking']);
 
     // ── SEC-009 (Rombel CRUD & Actions) ──────────────────────────────────
@@ -227,3 +226,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'signed'])
     ->get('report-exports/{reportExport}/download', [ReportExportController::class, 'download'])
     ->name('report-exports.download');
+
+
+// ── Certificate Download (meniru pola SEC-011) ──────────────────
+Route::post('certificates/{certificate}/link', [CertificateDownloadController::class, 'generateLink']);
+
+Route::middleware(['auth:sanctum', 'signed'])
+    ->get('certificates/{certificate}/download', [CertificateDownloadController::class, 'download'])
+    ->name('certificates.download');
