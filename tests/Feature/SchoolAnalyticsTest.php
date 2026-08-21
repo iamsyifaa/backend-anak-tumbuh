@@ -128,6 +128,13 @@ class SchoolAnalyticsTest extends TestCase
     public function test_ranking_shown_based_on_points_not_exp(): void
     {
         $school = School::factory()->create();
+
+        SchoolFeatureSetting::create([
+            'school_id' => $school->id,
+            'ranking_class_enabled' => true,
+            'ranking_cohort_enabled' => true,
+        ]);
+
         $year = AcademicYear::factory()->create(['school_id' => $school->id]);
         $rombel = Rombel::factory()->create(['school_id' => $school->id, 'academic_year_id' => $year->id]);
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\SchoolFeatureSetting;
 use App\Models\AcademicYear;
 use App\Models\Enrollment;
 use App\Models\PointTransaction;
@@ -51,6 +52,13 @@ class RankingServiceTest extends TestCase
     public function test_student_with_more_points_ranks_higher(): void
     {
         $school = School::factory()->create();
+
+        SchoolFeatureSetting::create([
+            'school_id' => $school->id,
+            'ranking_class_enabled' => true,
+            'ranking_cohort_enabled' => true,
+        ]);
+
         $academicYear = AcademicYear::create([
             'school_id' => $school->id,
             'name' => 'TA 2026/2027',

@@ -2,16 +2,22 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StudentImportUploadRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Otorisasi role (super_admin/kepala_sekolah) dicek via Policy
-        // terpisah saat SEC-xxx dikerjakan Anggota A. Sementara true
-        // supaya tidak memblokir development; TODO: ganti ke Gate/Policy.
-        return true;
+        // Defense-in-depth dengan middleware role.not:wali_kelas,siswa di
+        // routes/api.php: import siswa cuma boleh Super Admin & Kepala
+        // Sekolah. Sebelumnya method ini selalu return true dan hanya
+        // mengandalkan middleware route sebagai satu-satunya lapisan —
+        // sekarang dicek juga di sini supaya ada 2 lapisan proteksi.
+        return in_array($this->user()->role, [
+            User::ROLE_SUPER_ADMIN,
+            User::ROLE_KEPALA_SEKOLAH,
+        ], true);
     }
 
     public function rules(): array
