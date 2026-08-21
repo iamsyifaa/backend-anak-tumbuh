@@ -95,4 +95,112 @@ class RankingServiceTest extends TestCase
 
         $this->assertSame(100, $rankings->first()['total_points']);
     }
+
+    public function test_cohort_ranking_only_counts_current_month_points(): void
+    {
+        $school = School::factory()->create();
+
+        SchoolFeatureSetting::create([
+            'school_id' => $school->id,
+            'ranking_class_enabled' => true,
+            'ranking_cohort_enabled' => true,
+        ]);
+
+        $academicYear = AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => 'TA 2026/2027',
+            'is_active' => true,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addMonths(10)->toDateString(),
+        ]);
+
+        // Siswa A: poin besar BULAN LALU, kecil bulan ini.
+        $studentA = $this->makeStudentInYear($academicYear, 0);
+        PointTransaction::create([
+            'user_id' => $studentA->user_id,
+            'amount' => 500,
+            'source_type' => 'x',
+            'source_id' => 1,
+            'period_date' => now()->subMonth()->toDateString(),
+        ]);
+        PointTransaction::create([
+            'user_id' => $studentA->user_id,
+            'amount' => 10,
+            'source_type' => 'x',
+            'source_id' => 2,
+            'period_date' => now()->toDateString(),
+        ]);
+
+        // Siswa B: poin kecil bulan lalu, BESAR bulan ini.
+        $studentB = $this->makeStudentInYear($academicYear, 0);
+        PointTransaction::create([
+            'user_id' => $studentB->user_id,
+            'amount' => 5,
+            'source_type' => 'x',
+            'source_id' => 3,
+            'period_date' => now()->subMonth()->toDateString(),
+        ]);
+        PointTransaction::create([
+            'user_id' => $studentB->user_id,
+            'amount' => 100,
+            'source_type' => 'x',
+            'source_id' => 4,
+            'period_date' => now()->toDateString(),
+        ]);
+
+        $service = app(RankingService::class);
+
+        // Ranking BULAN INI: B (100) harus di atas A (10), walau total
+        // keseluruhan A (510) jauh lebih besar dari B (105).
+        $rankings = $service->getRankingsForSchool($school->id, now());
+
+        $this->assertSame($studentB->user_id, $rankings->first()['user_id']);
+        $this->assertSame(100, $rankings->first()['total_points']);
+
+        // Ranking KUMULATIF (tanpa $month): A tetap unggul, membuktikan
+        // kedua mode hidup berdampingan, tidak saling menimpa.
+        $cumulative = $service->getRankingsForSchool($school->id);
+
+        $this->assertSame($studentA->user_id, $cumulative->first()['user_id']);
+        $this->assertSame(510, $cumulative->first()['total_points']);
+    }
+
+    public function test_get_position_for_student_uses_current_month_only(): void
+    {
+        $school = School::factory()->create();
+
+        SchoolFeatureSetting::create([
+            'school_id' => $school->id,
+            'ranking_class_enabled' => true,
+            'ranking_cohort_enabled' => true,
+        ]);
+
+        $academicYear = AcademicYear::create([
+            'school_id' => $school->id,
+            'name' => 'TA 2026/2027',
+            'is_active' => true,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addMonths(10)->toDateString(),
+        ]);
+
+        // Siswa dengan poin besar bulan lalu, tapi TIDAK PUNYA poin bulan ini.
+        $topLastMonth = $this->makeStudentInYear($academicYear, 0);
+        PointTransaction::create([
+            'user_id' => $topLastMonth->user_id,
+            'amount' => 1000,
+            'source_type' => 'x',
+            'source_id' => 5,
+            'period_date' => now()->subMonth()->toDateString(),
+        ]);
+
+        // Siswa dengan poin kecil, tapi didapat bulan ini.
+        $activeThisMonth = $this->makeStudentInYear($academicYear, 20);
+
+        $service = app(RankingService::class);
+
+        // topLastMonth tidak punya poin bulan ini sama sekali → posisi paling
+        // bawah (bukan posisi 1 walau total historisnya jauh lebih besar).
+        $this->assertSame(2, $service->getPositionForStudent($topLastMonth));
+        $this->assertSame(1, $service->getPositionForStudent($activeThisMonth));
+    }
 }
