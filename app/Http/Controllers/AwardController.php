@@ -37,11 +37,7 @@ class AwardController extends Controller
             'code' => 'required|string|unique:awards,code',
             'name' => 'required|string',
             'description' => 'nullable|string',
-            // criteria berbasis kebiasaan/periode, BUKAN poin/level —
-            // divalidasi generic (array bebas), enforcement "bukan
-            // poin/level" ada di lapisan dokumentasi/review, karena
-            // sifatnya definisi terbuka (configurable) sesuai requirement.
-            'criteria' => 'nullable|array',
+            'criteria' => ['nullable', 'array', $this->criteriaNotPointOrLevelBased()],
             'generates_certificate' => 'nullable|boolean',
             'active' => 'nullable|boolean',
         ]);
@@ -61,7 +57,7 @@ class AwardController extends Controller
             'code' => 'sometimes|required|string|unique:awards,code,'.$award->id,
             'name' => 'sometimes|required|string',
             'description' => 'nullable|string',
-            'criteria' => 'nullable|array',
+            'criteria' => ['nullable', 'array', $this->criteriaNotPointOrLevelBased()],
             'generates_certificate' => 'nullable|boolean',
             'active' => 'nullable|boolean',
         ]);
@@ -127,5 +123,42 @@ class AwardController extends Controller
                 'awards' => $awards,
             ],
         ]);
+    }
+
+    /**
+     * FIX (GAP-3 audit): Award tidak boleh berbasis Poin/Level (requirement
+     * eksplisit MASTER-007). Sebelumnya 'criteria' cuma divalidasi
+     * 'nullable|array' generic, jadi tidak ada yang menegakkan aturan ini
+     * secara teknis. Rule ini menolak eksplisit kalau ada key yang
+     * menyerempet poin/level/exp, dicek rekursif untuk jaga-jaga kalau
+     * criteria punya struktur nested.
+     */
+    private function criteriaNotPointOrLevelBased(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            $forbidden = ['point', 'poin', 'points', 'level', 'exp', 'score'];
+
+            $containsForbiddenKey = function (array $criteria) use (&$containsForbiddenKey, $forbidden): bool {
+                foreach ($criteria as $key => $val) {
+                    if (is_string($key)) {
+                        foreach ($forbidden as $term) {
+                            if (str_contains(strtolower($key), $term)) {
+                                return true;
+                            }
+                        }
+                    }
+
+                    if (is_array($val) && $containsForbiddenKey($val)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            };
+
+            if (is_array($value) && $containsForbiddenKey($value)) {
+                $fail('Kriteria Award tidak boleh berbasis Poin, Level, atau EXP sesuai requirement.');
+            }
+        };
     }
 }
