@@ -9,7 +9,7 @@ class Rombel extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['school_id', 'academic_year_id', 'name', 'homeroom_teacher_id', 'status'];
+    protected $fillable = ['school_id', 'academic_year_id', 'name', 'homeroom_teacher_id', 'status', 'education_level_id'];
 
     protected $casts = ['status' => 'string'];
 
@@ -26,6 +26,16 @@ class Rombel extends Model
     public function homeroomTeacher()
     {
         return $this->belongsTo(User::class, 'homeroom_teacher_id');
+    }
+
+    /**
+     * FK ke education_levels (dibuat & dimiliki Anggota B, MASTER-xxx).
+     * Model App\Models\EducationLevel TIDAK didefinisikan di sini — sudah
+     * ada di codebase (sudah merge ke main), cuma direferensikan.
+     */
+    public function educationLevel()
+    {
+        return $this->belongsTo(\App\Models\EducationLevel::class);
     }
 
     public function assignments()
