@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use App\Models\EducationLevel;
+use App\Models\Rombel;
 use App\Models\SchoolFeatureSetting;
 use App\Models\AcademicYear;
 use App\Models\Enrollment;
@@ -17,8 +19,22 @@ class RankingServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function makeStudentInYear(AcademicYear $academicYear, int $points): StudentProfile
+    private function makeStudentInYear(AcademicYear $academicYear, int $points, ?int $rombelId = null): StudentProfile
     {
+                if ($rombelId === null) {
+            $educationLevel = EducationLevel::firstOrCreate(
+                ['school_id' => $academicYear->school_id, 'name' => 'Kelas 5'],
+                ['order' => 5, 'status' => 'active']
+            );
+
+            $rombel = Rombel::firstOrCreate(
+                ['academic_year_id' => $academicYear->id, 'name' => 'Kelas 5A'],
+                ['school_id' => $academicYear->school_id, 'education_level_id' => $educationLevel->id, 'status' => 'active']
+            );
+
+            $rombelId = $rombel->id;
+        }
+
         $user = User::factory()->create();
         $profile = StudentProfile::create([
             'user_id' => $user->id,
@@ -32,6 +48,7 @@ class RankingServiceTest extends TestCase
         Enrollment::create([
             'student_profile_id' => $profile->id,
             'academic_year_id' => $academicYear->id,
+            'rombel_id' => $rombelId,
             'status' => Enrollment::STATUS_ACTIVE,
             'started_at' => now(),
         ]);

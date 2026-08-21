@@ -47,11 +47,14 @@ class PrincipalDashboardController extends Controller
                 ];
             });
 
-        $rankingEnabled = $this->rankingService->isEnabledForSchool($school->id);
+       $rankingEnabled = $this->rankingService->isCohortRankingEnabledForSchool($school->id);
         $topRanking = null;
 
-        if ($rankingEnabled) {
-            $topRanking = $this->rankingService->getRankingsForSchool($school->id, now())->take(10)->values();
+        if ($rankingEnabled && $request->filled('education_level_id')) {
+            $topRanking = $this->rankingService
+                ->getRankingsForGrade((int) $request->integer('education_level_id'), now())
+                ->take(10)
+                ->values();
         }
 
         return $this->success([
