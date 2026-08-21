@@ -11,6 +11,8 @@ use App\Models\StudentAward;
 use App\Models\StudentBadge;
 use App\Models\StudentProfile;
 use App\Support\ApiResponse;
+use App\Services\Progress\ProgressService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 /**
@@ -31,6 +33,7 @@ class StudentDashboardController extends Controller
 
     public function __construct(
         private readonly RankingService $rankingService,
+        private readonly ProgressService $progressService,
     ) {}
 
     private function currentStudentProfile(Request $request): StudentProfile
@@ -88,6 +91,36 @@ class StudentDashboardController extends Controller
     /**
      * GET /api/student/me/certificates
      */
+
+    /**
+     * GET /api/student/me/progress
+     *
+     * Menutup gap requirement Bagian 25 — siswa berhak melihat
+     * "perkembangan" miliknya sendiri, sebelumnya cuma bisa diakses guru
+     * lewat TeacherController::studentProgress() (formula berbeda,
+     * days_filled/days_since_enrolled). Endpoint ini pakai ProgressService
+     * yang sudah ada tapi belum pernah disambungkan ke controller manapun.
+     *
+     * Query param opsional `?month=YYYY-MM` untuk lihat progress bulan
+     * lain; default bulan berjalan.
+     *
+     * ⚠️ completion_rate formula masih PLACEHOLDER (lihat docblock
+     * ProgressService::getMonthlyProgress) — belum tentu sama dengan
+     * formula TeacherController::studentProgress(). Ini disengaja untuk
+     * gap ini, refactor konsistensi formula didiskusikan terpisah.
+     */
+    public function progress(Request $request)
+    {
+        $profile = $this->currentStudentProfile($request);
+
+        $month = $request->query('month')
+            ? Carbon::parse($request->query('month'))
+            : null;
+
+        $progress = $this->progressService->getMonthlyProgress($profile->id, $month);
+
+        return $this->success($progress);
+    }
 
     /**
      * GET /api/student/me/ranking

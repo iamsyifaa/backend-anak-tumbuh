@@ -116,6 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('student/me/history', [StudentDashboardController::class, 'history']);
     Route::get('student/me/achievements', [StudentDashboardController::class, 'achievements']);
     Route::get('student/me/ranking', [StudentDashboardController::class, 'ranking']);
+    Route::get('student/me/progress', [StudentDashboardController::class, 'progress']);
 
     // ── SEC-009 (Rombel CRUD & Actions) ──────────────────────────────────
     Route::get('rombels', [RombelController::class, 'index']);
