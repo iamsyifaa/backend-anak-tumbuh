@@ -51,7 +51,7 @@ class PrincipalDashboardController extends Controller
         $topRanking = null;
 
         if ($rankingEnabled) {
-            $topRanking = $this->rankingService->getRankingsForSchool($school->id)->take(10)->values();
+            $topRanking = $this->rankingService->getRankingsForSchool($school->id, now())->take(10)->values();
         }
 
         return $this->success([
