@@ -15,6 +15,7 @@ class SchoolFactory extends Factory
             'name' => $this->faker->company().' School',
             'code' => strtoupper($this->faker->unique()->bothify('SCH-####')),
             'status' => 'active',
+            'timezone' => 'Asia/Jakarta',
         ];
     }
 }
