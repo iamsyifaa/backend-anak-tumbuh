@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Collection;
 use App\Services\Business\RankingService;
 use App\Models\ActivitySubmission;
-use App\Models\Certificate;
 use App\Models\PointTransaction;
 use App\Models\SchoolFeatureSetting;
 use App\Models\StudentAward;
@@ -89,17 +88,6 @@ class StudentDashboardController extends Controller
     /**
      * GET /api/student/me/certificates
      */
-    public function certificates(Request $request)
-    {
-        $profile = $this->currentStudentProfile($request);
-
-        $certificates = Certificate::with('award')
-            ->where('student_profile_id', $profile->id)
-            ->orderByDesc('issued_at')
-            ->paginate(15);
-
-        return $this->success($certificates);
-    }
 
     /**
      * GET /api/student/me/ranking
