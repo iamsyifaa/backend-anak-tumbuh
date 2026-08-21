@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\StudentQrLoginController;
 use App\Http\Controllers\AwardController;
 use App\Http\Controllers\BadgeController;
+use App\Http\Controllers\CertificateDownloadController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\EducationLevelController;
 use App\Http\Controllers\HabitConfigController;
@@ -17,7 +18,6 @@ use App\Http\Controllers\PointController;
 use App\Http\Controllers\PrincipalDashboardController;
 use App\Http\Controllers\Report\HabitInitiativeReportController;
 use App\Http\Controllers\ReportExportController;
-use App\Http\Controllers\CertificateDownloadController;
 use App\Http\Controllers\ReportGenerateController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SchoolController;
@@ -153,6 +153,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── BE-012 (Report Filter Kebiasaan & Inisiatif) ───────────────
     Route::middleware('read-only')->get('reports/habit-initiative', HabitInitiativeReportController::class);
+
     // ── STUDENT IMPORT ───────────────────────────────────────────────────
     // [OPS-001] Import siswa cuma boleh Super Admin & Kepala Sekolah — Wali
     // Kelas dan Siswa TIDAK BOLEH bikin akun siswa baru sembarangan lewat
@@ -204,11 +205,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/students/{studentProfile}/awards', [AwardController::class, 'give']);
     Route::get('/students/{studentProfile}/awards', [AwardController::class, 'studentAwards']);
 
-    // ── MASTER-007 (Certificate Template) ────────────────────────────────
+    // ── MASTER-007 (Certificate Template & Link) ────────────────────────
     Route::get('/certificate-templates', [CertificateTemplateController::class, 'index']);
     Route::post('/certificate-templates', [CertificateTemplateController::class, 'store']);
     Route::put('/certificate-templates/{certificateTemplate}', [CertificateTemplateController::class, 'update']);
     Route::delete('/certificate-templates/{certificateTemplate}', [CertificateTemplateController::class, 'destroy']);
+    Route::post('certificates/{certificate}/link', [CertificateDownloadController::class, 'generateLink']);
 
     // ── Level Threshold Configuration (Super Admin only) ──────────────
     Route::middleware('role.not:kepala_sekolah,wali_kelas,siswa')->group(function () {
@@ -219,17 +221,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Route download TERPISAH dari grup auth:sanctum di atas — signed URL
-// membawa otorisasinya sendiri lewat signature, TAPI tetap butuh user login
-// (Policy cek $request->user()), jadi tetap di-guard auth:sanctum, hanya
-// modelnya beda: middleware 'signed' Laravel bawaan yang validasi signature.
+// ── Signed Download Routes ───────────────────────────────────────────────────
+// Route download terpisah dari grup auth:sanctum utama — signed URL membawa otorisasinya
+// sendiri via signature, tapi tetap dicek auth & signature oleh middleware Laravel.
 Route::middleware(['auth:sanctum', 'signed'])
     ->get('report-exports/{reportExport}/download', [ReportExportController::class, 'download'])
     ->name('report-exports.download');
-
-
-// ── Certificate Download (meniru pola SEC-011) ──────────────────
-Route::post('certificates/{certificate}/link', [CertificateDownloadController::class, 'generateLink']);
 
 Route::middleware(['auth:sanctum', 'signed'])
     ->get('certificates/{certificate}/download', [CertificateDownloadController::class, 'download'])
