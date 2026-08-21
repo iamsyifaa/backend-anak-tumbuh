@@ -16,6 +16,7 @@ use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Carbon\Carbon;
 
 class StudentDashboardTest extends TestCase
 {
@@ -67,6 +68,7 @@ class StudentDashboardTest extends TestCase
         $this->actingAs($wali, 'sanctum')->getJson('/api/student/me/history')->assertStatus(404);
         $this->actingAs($wali, 'sanctum')->getJson('/api/student/me/achievements')->assertStatus(404);
         $this->actingAs($wali, 'sanctum')->getJson('/api/student/me/certificates')->assertStatus(404);
+        $this->actingAs($wali, 'sanctum')->getJson('/api/student/me/progress')->assertStatus(404);
     }
 
     // ── Achievements gabungan ───────────────────────────────────
@@ -140,5 +142,68 @@ class StudentDashboardTest extends TestCase
             ->assertJsonPath('data.ranking_enabled', true)
             ->assertJsonPath('data.class_rank.rank', 1)
             ->assertJsonPath('data.class_rank.my_points', 100);
+    }
+
+        // ── Progress (Bagian 25) ─────────────────────────────────────
+
+    public function test_progress_computes_completion_rate_for_current_month(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 15));
+
+        $profile = $this->makeStudentWithEnrollment();
+        $other = $this->makeStudentWithEnrollment();
+
+        foreach ([1, 3, 5] as $day) {
+            ActivitySubmission::create([
+                'student_profile_id' => $profile->id,
+                'activity_date' => Carbon::create(2026, 8, $day)->toDateString(),
+                'status' => 'locked',
+            ]);
+        }
+
+        // Status draft tidak boleh ikut dihitung sebagai "sudah mengisi".
+        ActivitySubmission::create([
+            'student_profile_id' => $profile->id,
+            'activity_date' => Carbon::create(2026, 8, 10)->toDateString(),
+            'status' => 'draft',
+        ]);
+
+        // Submission siswa lain tidak boleh ikut terhitung (IDOR check —
+        // tidak ada param ID di endpoint ini, identitas selalu dari token).
+        ActivitySubmission::create([
+            'student_profile_id' => $other->id,
+            'activity_date' => Carbon::create(2026, 8, 2)->toDateString(),
+            'status' => 'locked',
+        ]);
+
+        $response = $this->actingAs($profile->user, 'sanctum')->getJson('/api/student/me/progress');
+
+        $response->assertOk()
+            ->assertJsonPath('data.submitted_days', 3)
+            ->assertJsonPath('data.days_elapsed', 15)
+            ->assertJsonPath('data.completion_rate', round(3 / 15, 2));
+
+        Carbon::setTestNow();
+    }
+
+    public function test_progress_accepts_month_query_param_for_past_month(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 15));
+
+        $profile = $this->makeStudentWithEnrollment();
+
+        ActivitySubmission::create([
+            'student_profile_id' => $profile->id,
+            'activity_date' => Carbon::create(2026, 7, 10)->toDateString(),
+            'status' => 'locked',
+        ]);
+
+        $response = $this->actingAs($profile->user, 'sanctum')->getJson('/api/student/me/progress?month=2026-07');
+
+        $response->assertOk()
+            ->assertJsonPath('data.submitted_days', 1)
+            ->assertJsonPath('data.days_elapsed', Carbon::create(2026, 7, 1)->daysInMonth);
+
+        Carbon::setTestNow();
     }
 }
