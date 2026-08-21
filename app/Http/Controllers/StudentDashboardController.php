@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Collection;
+use App\Services\Business\RankingService;
 use App\Models\ActivitySubmission;
 use App\Models\Certificate;
 use App\Models\PointTransaction;
@@ -27,6 +29,10 @@ use Illuminate\Http\Request;
 class StudentDashboardController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(
+        private readonly RankingService $rankingService,
+    ) {}
 
     private function currentStudentProfile(Request $request): StudentProfile
     {
@@ -118,10 +124,8 @@ class StudentDashboardController extends Controller
         abort_if($enrollment === null, 404, 'Siswa belum terdaftar di rombel manapun pada periode aktif.');
 
         $schoolId = $profile->user->school_id;
-        $setting = SchoolFeatureSetting::where('school_id', $schoolId)->first();
-
-        $classEnabled = (bool) ($setting->ranking_class_enabled ?? false);
-        $cohortEnabled = (bool) ($setting->ranking_cohort_enabled ?? false);
+        $classEnabled = $this->rankingService->isClassRankingEnabledForSchool($schoolId);
+        $cohortEnabled = $this->rankingService->isCohortRankingEnabledForSchool($schoolId);
 
         if (! $classEnabled && ! $cohortEnabled) {
             return $this->success([
@@ -137,47 +141,31 @@ class StudentDashboardController extends Controller
         ];
 
         if ($classEnabled) {
-            $result['class_rank'] = $this->computeRank(
+            $result['class_rank'] = $this->buildRankResult(
                 $profile,
-                StudentProfile::whereHas('enrollments', function ($q) use ($enrollment) {
-                    $q->where('rombel_id', $enrollment->rombel_id)
-                        ->where('status', 'active');
-                })
+                $this->rankingService->getRankingsForRombel($enrollment->rombel_id)
             );
         }
 
         if ($cohortEnabled) {
-            $result['cohort_rank'] = $this->computeRank(
+            $result['cohort_rank'] = $this->buildRankResult(
                 $profile,
-                StudentProfile::whereHas('enrollments', function ($q) use ($enrollment) {
-                    $q->where('academic_year_id', $enrollment->academic_year_id)
-                        ->where('status', 'active');
-                })
+                $this->rankingService->getRankingsForSchool($schoolId)
             );
         }
 
         return $this->success($result);
     }
 
-    private function computeRank(StudentProfile $profile, $peerQuery): array
+    private function buildRankResult(StudentProfile $profile, Collection $rankings): array
     {
-        $peerIds = $peerQuery->pluck('id');
-
-        $totals = PointTransaction::whereIn(
-            'user_id',
-            StudentProfile::whereIn('id', $peerIds)->pluck('user_id')
-        )
-            ->selectRaw('user_id, SUM(amount) as total')
-            ->groupBy('user_id')
-            ->orderByDesc('total')
-            ->pluck('total', 'user_id');
-
-        $rank = $totals->keys()->search($profile->user_id);
+        $position = $rankings->search(fn ($row) => $row['user_id'] === $profile->user_id);
+        $myPoints = $rankings->firstWhere('user_id', $profile->user_id)['total_points'] ?? 0;
 
         return [
-            'rank' => $rank === false ? null : $rank + 1,
-            'total_students' => $totals->count(),
-            'my_points' => (int) ($totals[$profile->user_id] ?? 0),
+            'rank' => $position === false ? null : $position + 1,
+            'total_students' => $rankings->count(),
+            'my_points' => $myPoints,
         ];
     }
 }
