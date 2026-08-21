@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\EducationLevel;
 use App\Models\AcademicYear;
 use App\Models\Enrollment;
 use App\Models\ExpTransaction;
@@ -136,7 +137,17 @@ class SchoolAnalyticsTest extends TestCase
         ]);
 
         $year = AcademicYear::factory()->create(['school_id' => $school->id]);
-        $rombel = Rombel::factory()->create(['school_id' => $school->id, 'academic_year_id' => $year->id]);
+        $educationLevel = EducationLevel::create([
+            'school_id' => $school->id,
+            'name' => 'Kelas 5',
+            'order' => 5,
+            'status' => 'active',
+        ]);
+        $rombel = Rombel::factory()->create([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'education_level_id' => $educationLevel->id,
+        ]);
 
         $studentLowPointHighExp = $this->makeStudentInRombel($school, $rombel, $year);
         $studentHighPointLowExp = $this->makeStudentInRombel($school, $rombel, $year);
@@ -156,7 +167,10 @@ class SchoolAnalyticsTest extends TestCase
         ]);
 
         $admin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
-        $response = $this->actingAs($admin, 'sanctum')->getJson("/api/schools/{$school->id}/dashboard/overview");
+        $response = $this->actingAs($admin, 'sanctum')->getJson("/api/schools/{$school->id}/dashboard/overview?education_level_id={$educationLevel->id}");
+
+        // Ranking teratas harus siswa dengan poin tertinggi (100), BUKAN
+        // yang EXP-nya tertinggi (500) — buktikan tidak tercampur.
 
         // Ranking teratas harus siswa dengan poin tertinggi (100), BUKAN
         // yang EXP-nya tertinggi (500) — buktikan tidak tercampur.

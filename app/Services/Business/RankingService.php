@@ -52,13 +52,15 @@ class RankingService
      */
     public function getPositionForStudent(StudentProfile $studentProfile): ?int
     {
-        $schoolId = $studentProfile->currentEnrollment()->first()?->academicYear?->school_id;
+        $enrollment = $studentProfile->currentEnrollment()->first();
+        $schoolId = $enrollment?->academicYear?->school_id;
+        $educationLevelId = $enrollment?->rombel?->education_level_id;
 
-        if (! $schoolId || ! $this->isCohortRankingEnabledForSchool($schoolId)) {
+        if (! $schoolId || ! $educationLevelId || ! $this->isCohortRankingEnabledForSchool($schoolId)) {
             return null;
         }
 
-        $rankings = $this->getRankingsForSchool($schoolId, now());
+        $rankings = $this->getRankingsForGrade($educationLevelId, now());
 
         $position = $rankings->search(fn ($row) => $row['user_id'] === $studentProfile->user_id);
 
@@ -86,21 +88,17 @@ class RankingService
         return $position === false ? null : $position + 1;
     }
 
-        /**
-     * Ranking se-sekolah (angkatan). Beri $month untuk membatasi transaksi
-     * poin ke bulan tertentu (sesuai Requirement Bagian 14: "Ranking
-     * angkatan dihitung per bulan"). Kalau $month null, kumulatif —
-     * dipertahankan untuk pemanggil yang belum diupdate.
-     *
-     * Scope saat ini masih SE-SEKOLAH (bukan per tingkat pendidikan) —
-     * tim sudah sepakat "angkatan" seharusnya per tingkat, tapi itu
-     * menunggu kolom education_level_id (Anggota A) yang mereferensi
-     * tabel education_levels (Anggota B). Begitu itu siap, method ini
-     * akan diganti scope-nya, filter bulan di bawah tidak berubah.
+    /**
+     * Ranking se-sekolah (LINTAS TINGKAT, semua siswa digabung). BUKAN
+     * lagi representasi "angkatan" sejak getRankingsForGrade() dibuat —
+     * dipertahankan untuk kasus yang memang butuh gambaran seluruh
+     * sekolah (mis. dashboard ringkasan Kepala Sekolah), tapi endpoint
+     * "ranking angkatan" siswa/dashboard utama sudah pindah ke
+     * getRankingsForGrade().
      *
      * @return Collection<int, array{user_id: int, total_points: int}>
      *                                                                 Terurut dari poin tertinggi ke terendah.
-     */
+    */
     public function getRankingsForSchool(int $schoolId, ?Carbon $month = null): Collection
     {
         $userIds = StudentProfile::whereHas(
@@ -126,6 +124,26 @@ class RankingService
         )->pluck('user_id');
 
         return $this->rankByPoints($userIds);
+    }
+
+        /**
+     * Ranking satu tingkat pendidikan (angkatan sesungguhnya, lintas
+     * rombel paralel — misal semua "Kelas 5A/5B/5C" digabung jadi satu
+     * ranking "Kelas 5"). Menggantikan getRankingsForSchool() untuk
+     * konteks angkatan, sesuai keputusan tim: "angkatan" = per tingkat,
+     * bukan per sekolah keseluruhan.
+     *
+     * @return Collection<int, array{user_id: int, total_points: int}>
+     *                                                                 Terurut dari poin tertinggi ke terendah.
+     */
+    public function getRankingsForGrade(int $educationLevelId, ?Carbon $month = null): Collection
+    {
+        $userIds = StudentProfile::whereHas(
+            'currentEnrollment.rombel',
+            fn ($q) => $q->where('education_level_id', $educationLevelId)
+        )->pluck('user_id');
+
+        return $this->rankByPoints($userIds, $month);
     }
 
     /**
