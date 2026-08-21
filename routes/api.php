@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\StudentQrLoginController;
 use App\Http\Controllers\AwardController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\CertificateTemplateController;
+use App\Http\Controllers\EducationLevelController;
 use App\Http\Controllers\HabitConfigController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\LevelThresholdController;
@@ -66,6 +67,13 @@ Route::middleware('auth:sanctum')->group(function () {
             ->parameters(['academic-years' => 'academicYear']);
 
         Route::post('academic-years/{academicYear}/activate', [AcademicYearController::class, 'activate']);
+
+        // ── EDUCATION LEVEL (Jenjang Pendidikan) ────────────────────────
+        // TODO: belum ada di dokumen resmi 01_Role_Permission_v2_0, Policy
+        // masih sementara cek role langsung (bukan config('permissions')).
+        // Lihat catatan di EducationLevelPolicy.
+        Route::apiResource('education-levels', EducationLevelController::class)
+            ->parameters(['education-levels' => 'educationLevel']);
 
         // ── AUTH-004 ─────────────────────────────────────────────────────
         Route::apiResource('habit-configs', HabitConfigController::class)
