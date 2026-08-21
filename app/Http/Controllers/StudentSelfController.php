@@ -34,12 +34,6 @@ class StudentSelfController extends Controller
      * eksplisit, jadi WAJIB authorize(). Ini contoh pola yang harus diikuti
      * MASTER-008 untuk endpoint mana pun yang menerima ID di URL.
      */
-    public function showCertificate(Request $request, Certificate $certificate)
-    {
-        $this->authorize('view', $certificate);
-
-        return $this->success($certificate);
-    }
 
     /**
      * GET /api/students/{studentProfile} — sengaja disediakan sebagai contoh
