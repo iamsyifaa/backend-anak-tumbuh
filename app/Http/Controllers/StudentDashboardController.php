@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Collection;
+use App\Models\School;
 use App\Services\Business\RankingService;
 use App\Models\ActivitySubmission;
 use App\Models\PointTransaction;
@@ -168,17 +169,20 @@ class StudentDashboardController extends Controller
             );
         }
 
-            if ($cohortEnabled) {
-                $educationLevelId = $enrollment->rombel?->education_level_id;
+        if ($cohortEnabled) {
+            $educationLevelId = $enrollment->rombel?->education_level_id;
 
-                $result['cohort_rank'] = $educationLevelId
-                    ? $this->buildRankResult(
-                        $profile,
-                        $this->rankingService->getRankingsForGrade($educationLevelId, now())
-                    )
-                    : null;
-            }
+            // [Gap Timezone, Requirement Bagian 8] Batas bulan ranking
+            // angkatan mengikuti timezone sekolah, bukan server.
+            $schoolTimezone = School::find($schoolId)?->timezone;
 
+            $result['cohort_rank'] = $educationLevelId
+                ? $this->buildRankResult(
+                    $profile,
+                    $this->rankingService->getRankingsForGrade($educationLevelId, now($schoolTimezone))
+                )
+                : null;
+        }
         return $this->success($result);
     }
 
