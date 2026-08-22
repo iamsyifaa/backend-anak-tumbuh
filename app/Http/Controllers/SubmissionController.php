@@ -38,11 +38,23 @@ class SubmissionController extends Controller
         $studentProfileId = $studentProfile->id;
         $activityDate = $request->string('activity_date')->toString();
 
-        if ($this->guard->isBackfillAttempt($activityDate)) {
+        // [Gap Timezone, Requirement Bagian 8] Ambil timezone sekolah siswa
+        // via rantai relasi student_profile -> enrollment aktif -> rombel ->
+        // school. ⚠️ ASUMSI nama relasi (enrollments/rombel/school) belum
+        // 100% terverifikasi ke struktur Anggota B — pakai optional chaining
+        // (?->) supaya kalau salah satu link relasi tidak sesuai dugaan,
+        // otomatis fallback ke null (perilaku lama: pakai timezone server),
+        // BUKAN error 500. Kalau ada yang lebih tau rantai relasi persisnya,
+        // tolong perbaiki baris ini.
+        $schoolTimezone = $studentProfile
+            ?->enrollments()->where('status', 'active')->first()
+            ?->rombel?->school?->timezone;
+
+        if ($this->guard->isBackfillAttempt($activityDate, $schoolTimezone)) {
             return $this->error('Tidak tersedia pengisian susulan untuk hari yang terlewat.', 422);
         }
 
-        if ($this->guard->isFutureDate($activityDate)) {
+        if ($this->guard->isFutureDate($activityDate, $schoolTimezone)) {
             return $this->error('Tidak dapat mengisi untuk tanggal yang belum terjadi.', 422);
         }
 
