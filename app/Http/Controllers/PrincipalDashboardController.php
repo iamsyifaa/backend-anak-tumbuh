@@ -52,7 +52,9 @@ class PrincipalDashboardController extends Controller
 
         if ($rankingEnabled && $request->filled('education_level_id')) {
             $topRanking = $this->rankingService
-                ->getRankingsForGrade((int) $request->integer('education_level_id'), now())
+                // [Gap Timezone, Requirement Bagian 8] Batas bulan ranking
+                // angkatan mengikuti timezone sekolah, bukan server.
+                ->getRankingsForGrade((int) $request->integer('education_level_id'), now($school->timezone))
                 ->take(10)
                 ->values();
         }

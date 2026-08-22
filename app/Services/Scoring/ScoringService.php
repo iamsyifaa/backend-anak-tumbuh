@@ -26,7 +26,13 @@ class ScoringService
     {
         $activityDate = Carbon::parse($submission->activity_date);
 
-        if (! $this->dailyPeriodService->isPeriodOpenForSubmission($activityDate)) {
+        // [Gap Timezone, Requirement Bagian 8] Ambil timezone sekolah siswa,
+        // sama seperti pola di SubmissionController (Anggota A).
+        $schoolTimezone = $submission->studentProfile
+            ?->enrollments()->where('status', 'active')->first()
+            ?->rombel?->school?->timezone;
+
+        if (! $this->dailyPeriodService->isPeriodOpenForSubmission($activityDate, $schoolTimezone)) {
             // Konsisten dengan aturan BE-002: tidak ada backfill.
             // Submission di luar periode aktif TIDAK dihitung skornya sama sekali.
             return;

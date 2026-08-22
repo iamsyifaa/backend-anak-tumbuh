@@ -2,6 +2,7 @@
 
 namespace App\Services\Business;
 
+use App\Models\School;
 use App\Models\PointTransaction;
 use App\Models\SchoolFeatureSetting;
 use App\Models\StudentProfile;
@@ -60,7 +61,11 @@ class RankingService
             return null;
         }
 
-        $rankings = $this->getRankingsForGrade($educationLevelId, now());
+        // [Gap Timezone, Requirement Bagian 8] Batas bulan ranking angkatan
+        // mengikuti timezone sekolah, bukan server.
+        $schoolTimezone = School::find($schoolId)?->timezone;
+
+        $rankings = $this->getRankingsForGrade($educationLevelId, now($schoolTimezone));
 
         $position = $rankings->search(fn ($row) => $row['user_id'] === $studentProfile->user_id);
 
