@@ -7,28 +7,33 @@ use Carbon\Carbon;
 
 class StreakService
 {
-    /**
+   /**
      * Dipanggil setelah submission berhasil di-lock (minimal 1 kebiasaan
-     * terisi hari itu). Aturan streak:
+     * terisi hari itu). Satu row StudentStreak per user, KONTINU lintas
+     * bulan kalender (bukan reset tiap ganti bulan). Aturan streak:
      * - Isi berturutan (gap 0 hari) -> streak +1.
-     * - Kelewat 1 hari (gap) -> streak STUCK di angka terakhir (tidak
-     *   reset), missed opportunity +1 per hari yang terlewat.
-     * - Kalau isi lagi sebelum 7 kesempatan (missed) habis -> streak
-     *   lanjut dari angka terakhir, +1.
-     * - Kalau ke-7 kesempatan sudah habis semua -> streak reset ke 0
-     *   (mulai lagi dari 1 di aktivitas ini).
+     * - Kelewat N hari (gap) -> streak STUCK, lanjut dari angka terakhir
+     *   saat isi lagi, missed opportunity +N.
+     * - Reset ke 1 HANYA jika opportunities_used mencapai/melewati 7.
      */
     public function recordActivity(int $userId, Carbon $activityDate): StudentStreak
     {
         $streak = StudentStreak::firstOrCreate(
-            ['user_id' => $userId, 'month' => $activityDate->month, 'year' => $activityDate->year],
-            ['opportunities_used' => 0, 'current_streak_days' => 0]
+            ['user_id' => $userId],
+            [
+                'month' => $activityDate->month,
+                'year' => $activityDate->year,
+                'opportunities_used' => 0,
+                'current_streak_days' => 0,
+            ]
         );
 
-        // Aktivitas pertama di bulan ini / belum pernah aktif sebelumnya
+        // Aktivitas pertama sepanjang riwayat siswa (belum pernah aktif sama sekali)
         if (! $streak->last_active_date) {
             $streak->update([
                 'current_streak_days' => 1,
+                'month' => $activityDate->month,
+                'year' => $activityDate->year,
                 'last_active_date' => $activityDate->toDateString(),
             ]);
 
@@ -46,6 +51,8 @@ class StreakService
             // Berturutan, tidak ada hari terlewat
             $streak->update([
                 'current_streak_days' => $streak->current_streak_days + 1,
+                'month' => $activityDate->month,
+                'year' => $activityDate->year,
                 'last_active_date' => $activityDate->toDateString(),
             ]);
 
@@ -59,6 +66,8 @@ class StreakService
             $streak->update([
                 'opportunities_used' => 0,
                 'current_streak_days' => 1,
+                'month' => $activityDate->month,
+                'year' => $activityDate->year,
                 'last_active_date' => $activityDate->toDateString(),
             ]);
 
@@ -69,6 +78,8 @@ class StreakService
         $streak->update([
             'opportunities_used' => $newOpportunitiesUsed,
             'current_streak_days' => $streak->current_streak_days + 1,
+            'month' => $activityDate->month,
+            'year' => $activityDate->year,
             'last_active_date' => $activityDate->toDateString(),
         ]);
 

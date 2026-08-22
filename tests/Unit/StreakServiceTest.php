@@ -95,16 +95,28 @@ class StreakServiceTest extends TestCase
         $this->assertSame(0, $streak->opportunities_used);
     }
 
-    public function test_new_month_gets_fresh_streak_record(): void
+    public function test_streak_continues_across_calendar_month_boundary(): void
     {
         $user = User::factory()->create();
         $service = app(StreakService::class);
 
-        $service->recordActivity($user->id, Carbon::parse('2026-08-30'));
-        $septemberStreak = $service->recordActivity($user->id, Carbon::parse('2026-09-01'));
+        $service->recordActivity($user->id, Carbon::parse('2026-08-30')); // streak 1
+        $service->recordActivity($user->id, Carbon::parse('2026-08-31')); // streak 2, berturutan
+        $streak = $service->recordActivity($user->id, Carbon::parse('2026-09-01')); // streak 3, tetap berturutan lintas bulan
 
-        // record baru per bulan (firstOrCreate by month/year) -> mulai fresh
-        $this->assertSame(1, $septemberStreak->current_streak_days);
-        $this->assertSame(0, $septemberStreak->opportunities_used);
+        $this->assertSame(3, $streak->current_streak_days);
+        $this->assertSame(0, $streak->opportunities_used);
+    }
+
+    public function test_gap_across_calendar_month_boundary_keeps_streak_stuck(): void
+    {
+        $user = User::factory()->create();
+        $service = app(StreakService::class);
+
+        $service->recordActivity($user->id, Carbon::parse('2026-08-30')); // streak 1
+        $streak = $service->recordActivity($user->id, Carbon::parse('2026-09-01')); // gap 1 hari (31 Agustus kosong), lintas bulan
+
+        $this->assertSame(2, $streak->current_streak_days);
+        $this->assertSame(1, $streak->opportunities_used);
     }
 }
